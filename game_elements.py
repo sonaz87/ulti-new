@@ -26,6 +26,8 @@ class Player(object):
         self.sorting = SZINES
         self.points = 0
         self.selected_cards = []
+        self.wants_to_bid = False
+        self.licit_selected = None
 
     def update_all(self, other):
         self.is_dealer = other.is_dealer
@@ -35,6 +37,8 @@ class Player(object):
         self.sorting = other.sorting
         self.points = other.points
         self.selected_cards = other.selected_cards[:]
+        self.wants_to_bid = other.wants_to_bid
+        self.licit_selected = other.licit_selected
 
     def get_name(self):
         return self.name

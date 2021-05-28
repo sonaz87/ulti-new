@@ -55,10 +55,24 @@ def threaded_client(conn, p, game):
                     break
                 else:
                     # TODO! milyen bejövő data lehet?
+
                     if data == "test":
+                        print("in test msg handling")
                         game.new_popup(data)
                     elif data == SORTING:
+                        pritn("in sorting msg handling")
                         game.players[p].change_sorting()
+
+                    elif data == "bid":
+                        print("bid accept called")
+                        game.accept_bid()
+                    elif data == "pickup":
+                        print("pickup called")
+                        game.pickup()
+                    elif data == "passz":
+                        print("pass called")
+                        game.passz()
+
                     # TODO! game_phase-ek állítása
 
                     if game.game_phase in [STARTED, INIT] and len(game.players) == 3:
@@ -77,7 +91,7 @@ def threaded_client(conn, p, game):
 
                 except:
                     e = sys.exc_info()
-                    print(e)
+                    print("server error in incoming message handling ", e)
                     break
         except:
             e = sys.exc_info()
