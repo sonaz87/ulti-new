@@ -1,6 +1,7 @@
 import socket
 import pickle
 
+
 class Network(object):
     def __init__(self, ip, port):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -8,7 +9,6 @@ class Network(object):
         self.port = port
         self.addr = (self.server, self.port)
         self.p = self.connect()
-
 
     def getP(self):
         return self.p
@@ -34,6 +34,6 @@ class Network(object):
         except socket.error as e:
             print(e)
 
+
 server = "192.168.178.24"
 port = 5555
-

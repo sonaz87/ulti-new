@@ -40,11 +40,11 @@ players = []
 connected = set()
 idCount = 0
 
+
 def threaded_client(conn, p, game):
     conn.send(str.encode(str(p)))
     game.add_player(Player(p))
 
-    reply = ""
     while True:
         try:
             data = conn.recv(4096 * 8)
@@ -60,7 +60,7 @@ def threaded_client(conn, p, game):
                         print("in test msg handling")
                         game.new_popup(data)
                     elif data == SORTING:
-                        pritn("in sorting msg handling")
+                        print("in sorting msg handling")
                         game.players[p].change_sorting()
 
                     elif data == "bid":
@@ -80,7 +80,6 @@ def threaded_client(conn, p, game):
 
                     conn.sendall(pickle.dumps(game))
 
-
             except:
                 try:
                     data = pickle.loads(data)
@@ -98,9 +97,9 @@ def threaded_client(conn, p, game):
             print(e)
             break
 
-
     print("Lost connection")
     conn.close()
+
 
 game = Game()
 
@@ -112,9 +111,6 @@ while True:
     idCount += 1
     p = 0
 
-
     client_thread = threading.Thread(target = threaded_client, args = (conn, currentPlayer, game))
     client_thread.start()
     currentPlayer += 1
-
-

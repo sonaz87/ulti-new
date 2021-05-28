@@ -2,6 +2,7 @@ import pygame
 import sys
 from network import Network
 from game_elements import *
+from pygame.locals import *
 
 # pygame inits:
 pygame.font.init()
@@ -195,8 +196,6 @@ def redrawWindow(DISPLAYSURF, game, player):
 
     if game.game_phase == BIDDING and game.players[player].is_active:
         # akar-e licitálni:
-        if game.current_game == "Piros terített ulti durchmarsch húsz-száz":
-            n.send("passz")
         if not game.players[player].wants_to_bid:
             pickUpTalonButton = pygame.draw.rect(DISPLAYSURF, GREY, pickUpTalonRect)
             passInBiddingButton = pygame.draw.rect(DISPLAYSURF, GREY, passInBiddingRect)
@@ -286,6 +285,9 @@ def main():
 
             try:
                 if game.players[player].is_active:
+                    # a legnagyobb értékű játékra nem lehet rálicitálni
+                    if game.current_game == "Piros terített ulti durchmarsch húsz-száz":
+                        n.send("passz")
                     card_select_list = []
                     for i in range(len(cards_to_display)):
                         if mouseClicked and cards_to_display[i][1].collidepoint(mousex, mousey):

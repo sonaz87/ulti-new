@@ -6,11 +6,11 @@ Created on Mon May 17 14:25:07 2021
 """
 
 from random import shuffle
-from random import choices
-import pygame
-import sys
-import json
-from pygame.locals import *
+# from random import choices
+# import pygame
+# import sys
+# import json
+
 
 SZINES = 'szines'
 SZINTELEN = 'szintelen'
@@ -324,10 +324,6 @@ class TeritettNegyvenSzazUltiDurchmarsch(Szines):
 
 
 class TeritettPirosNegyvenSzazDurchmarsch(Szines):
-    pass
-
-
-class PirosTeritettNegyvenSzazUltiDurchmarsch(Szines):
     pass
 
 
