@@ -4,6 +4,8 @@ from network import Network
 from game_elements import *
 from pygame.locals import *
 
+
+
 # pygame inits:
 pygame.font.init()
 pygame.display.init()
@@ -24,6 +26,7 @@ GAME_PHASE = 'game_phase'
 SORTING = 'sorting'
 SZINES = "szines"
 SZINTELEN = 'szintelen'
+PLAY = 'play'
 
 # colors
 
@@ -74,6 +77,11 @@ licitConfirmButtonSurf = fontObj.render('OK', True, WHITE)
 licitConfirmButtonRect = licitConfirmButtonSurf.get_rect()
 licitConfirmButtonRect.center = (700, 550)
 
+playCardConfirmButtonSurf = fontObj.render('OK', True, WHITE)
+playCardConfirmButtonRect = licitConfirmButtonSurf.get_rect()
+playCardConfirmButtonRect.center = (1050, 800)
+
+
 width, height = 1400, 900
 
 DISPLAYSURF = pygame.display.set_mode((1400, 900), 0, 32)
@@ -89,6 +97,40 @@ for card in deck.cards:
     card_images.update({card.color + card.value: pygame.image.load(
         'D:/python projects/ulti/GUI/images/' + card.color + card.value + '.jpg')})
 
+def getStartAndEndPos(game):
+    pass
+
+def move_card(start_pos, end_pos):
+    startx = start_pos[0]
+    starty = start_pos[1]
+    endx = end_pos[0]
+    endy = end_pos[1]
+    if startx > endx:
+        if (startx - endx) % 40 != 0:
+            startx =  startx - ((startx - endx) % 40)
+        else:
+            startx -= 40
+    elif startx < endx:
+        if (endx - startx) % 40 != 0:
+            startx =  startx + ((endx - startx) % 40)
+        else:
+            startx += 40
+
+    if starty > endy:
+        if (starty - endy) % 40 != 0:
+            starty =  starty - ((starty - endy) % 40)
+        else:
+            starty -= 40
+    elif starty < endy:
+        if (endy - starty) % 40 != 0:
+            starty =  starty + ((endy - starty) % 40)
+        else:
+            starty += 40
+    return startx, starty
+
+def collectPlayedCards(game):
+    pass
+
 
 def redrawWindow(DISPLAYSURF, game, player):
     global sortButton
@@ -97,6 +139,19 @@ def redrawWindow(DISPLAYSURF, game, player):
     global licit_items
     global pickUpTalonButton
     global passInBiddingButton
+    global playCardConfirmButton
+    global p0PlayedCardStartPos
+    global p1PlayedCardStartPos
+    global p2PlayedCardStartPos
+    global p0PlayedCardEndPos
+    global p1PlayedCardEndPos
+    global p2PlayedCardEndPos
+    global client_animation_completed
+    global aduConfrimRect
+    global aduZoldRect
+    global aduMakkRect
+    global aduTokRect
+    global aduConfirmButton
 
 
     popupSurf1 = fontObj2.render(game.get_popups()[0], True, WHITE)
@@ -225,6 +280,87 @@ def redrawWindow(DISPLAYSURF, game, player):
                     licitConfirmButton = pygame.draw.rect(DISPLAYSURF, DARK_GREY, licitConfirmButtonRect)
                     DISPLAYSURF.blit(licitConfirmButtonSurf, licitConfirmButtonRect)
 
+    # play phase
+
+    if game.game_phase == PLAY:
+        if game.players[player].is_active:
+            try:
+                if game.selected_game.is_valid_choice(game.cards_on_the_table, game.players[player].selected_cards[0], game.players[player].hand):
+                    playCardConfirmButton = pygame.draw.rect(DISPLAYSURF, GREY, playCardConfirmButtonRect)
+                    DISPLAYSURF.blit(playCardConfirmButtonSurf, playCardConfirmButtonRect)
+            except:
+                # print("error in play phase display")
+                # e = sys.exc_info()
+                # print(e)
+                pass
+            # adu választás az első körben
+            try:
+                if game.selected_game.round == 1 and game.selected_game.adu == None:
+                    adu_box = pygame.draw.rect(DISPLAYSURF, LIGHT_GREY, (600, 150, 200, 200))
+                    aduTitleSurf = fontObj.render('Válassz adut!', True, WHITE)
+                    adutTitleRect = aduTitleSurf.get_rect()
+                    aduZoldSurf = fontObj2.render('Zöld', True, WHITE if game.players[player].adu_selected != 'zold' else RED)
+                    aduZoldRect = aduZoldSurf.get_rect()
+                    aduMakkSurf = fontObj2.render('Makk', True,
+                                                  WHITE if game.players[player].adu_selected != 'makk' else RED)
+                    aduMakkRect = aduZoldSurf.get_rect()
+                    aduTokSurf = fontObj2.render('Tök', True,
+                                                  WHITE if game.players[player].adu_selected != 'tok' else RED)
+                    aduTokRect = aduZoldSurf.get_rect()
+                    adutTitleRect.center = (700, 210)
+                    aduZoldRect.center = (700, 240)
+                    aduMakkRect.center = (700, 260)
+                    aduTokRect.center = (700, 280)
+
+                    aduConfirmSurf = fontObj.render("OK", True, WHITE)
+                    aduConfrimRect = aduConfirmSurf.get_rect()
+                    aduConfrimRect.center = (700, 350)
+                    DISPLAYSURF.blit(aduTitleSurf, adutTitleRect)
+                    DISPLAYSURF.blit(aduZoldSurf, aduZoldRect)
+                    DISPLAYSURF.blit(aduMakkSurf, aduMakkRect)
+                    DISPLAYSURF.blit(aduTokSurf, aduTokRect)
+                    if game.players[player].adu_selected != None:
+                        aduConfirmButton = pygame.draw.rect(DISPLAYSURF, DARK_GREY, aduConfrimRect)
+                        DISPLAYSURF.blit(aduConfirmSurf, aduConfrimRect)
+
+            except:
+                print("error in displaying adu selection")
+                e = sys.exc_info()
+                print(e)
+                pass
+
+
+        try:
+            if len(game.cards_on_the_table) > 0:
+                mid_cards_to_dislpay = []
+                # print("mid cards display started")
+                for element in game.cards_on_the_table:
+                    # print("element: ", element)
+                    # print("element[0]", element[0])
+                    middleCardSurf = card_images[element[0].color + element[0].value]
+                    # print("be")
+                    middleCardRect = middleCardSurf.get_rect()
+                    # print("bi")
+                    mid_cards_to_dislpay.append([[middleCardSurf, middleCardRect], element[1]])
+                    # print("ba")
+                # print("1")
+                # print(mid_cards_to_dislpay)
+                for i in mid_cards_to_dislpay:
+                    if i[1] == 0:
+                        # print("2")
+                        i[0][1].center = p0PlayedCardEndPos
+                    elif i[1] == 1:
+                        # print("3")
+                        i[0][1].center = p1PlayedCardEndPos
+                    elif i[1] == 2:
+                        # print("4")
+                        i[0][1].center = p2PlayedCardEndPos
+                    DISPLAYSURF.blit(i[0][0], i[0][1])
+        except:
+            print("error in displaying cards in the middle")
+            e = sys.exc_info()[0]
+            print(e)
+            pass
 
 
     pygame.display.update()
@@ -232,11 +368,20 @@ def redrawWindow(DISPLAYSURF, game, player):
 
 def main():
     global sortButton
+    global p0PlayedCardStartPos
+    global p1PlayedCardStartPos
+    global p2PlayedCardStartPos
+    global p0PlayedCardEndPos
+    global p1PlayedCardEndPos
+    global p2PlayedCardEndPos
+    global client_animation_completed
+    client_animation_completed = False
     run = True
     clock = pygame.time.Clock()
     n = Network(server, port)
     player = int(n.getP())
     print("You are player", player)
+
 
     while run:
         clock.tick(60)
@@ -250,6 +395,42 @@ def main():
             break
 
         redrawWindow(DISPLAYSURF, game, player)
+        # defining starting and ending playes for played cards
+        try:
+            if game.players[0].card_played == None:
+                if player == 0:
+                    p0PlayedCardStartPos = (700, 750)
+                    p0PlayedCardEndPos = (700, 450)
+                elif player == 1:
+                    p0PlayedCardStartPos = (80, 130)
+                    p0PlayedCardEndPos = (600, 400)
+                elif player == 2:
+                    p0PlayedCardStartPos = (1310, 130)
+                    p0PlayedCardEndPos = (800, 400)
+
+            if game.players[1].card_played == None:
+                if player == 0:
+                    p1PlayedCardStartPos = (1310, 130)
+                    p1PlayedCardEndPos = (800, 400)
+                elif player == 1:
+                    p1PlayedCardStartPos = (700, 750)
+                    p1PlayedCardEndPos = (700, 450)
+                elif player == 2:
+                    p1PlayedCardStartPos = (80, 130)
+                    p1PlayedCardEndPos = (600, 400)
+
+            if game.players[2].card_played == None:
+                if player == 0:
+                    p2PlayedCardStartPos = (80, 130)
+                    p2PlayedCardEndPos = (600, 400)
+                elif player == 1:
+                    p2PlayedCardStartPos = (1310, 130)
+                    p2PlayedCardEndPos = (800, 400)
+                elif player == 2:
+                    p2PlayedCardStartPos = (700, 750)
+                    p2PlayedCardEndPos = (700, 450)
+        except:
+            pass
 
 
         mouseClicked = False
@@ -302,6 +483,7 @@ def main():
                         if game.players[player].hand[card_select_list[0]] in game.players[player].selected_cards:
                             game.players[player].selected_cards.remove(game.players[player].hand[card_select_list[0]])
                         else:
+                            # in bidding phase, let player select 2 cards
                             if game.game_phase == BIDDING:
                                 if len(game.players[player].selected_cards) < 2:
                                     if game.players[player].hand[card_select_list[0]] not in game.players[player].selected_cards:
@@ -310,7 +492,15 @@ def main():
                                     if game.players[player].hand[card_select_list[0]] not in game.players[player].selected_cards:
                                         game.players[player].selected_cards.pop(0)
                                         game.players[player].selected_cards.append(game.players[player].hand[card_select_list[0]])
-                                        #TODO! a lejátszási fázisra is megírni
+                            # in play phase let player select 1 card only
+                            elif game.game_phase == PLAY:
+                                if len(game.players[player].selected_cards) < 1:
+                                    game.players[player].selected_cards.append(game.players[player].hand[card_select_list[0]])
+                                if len(game.players[player].selected_cards) == 1:
+                                    if game.players[player].hand[card_select_list[0]] not in game.players[player].selected_cards:
+                                        game.players[player].selected_cards.pop(0)
+                                        game.players[player].selected_cards.append(game.players[player].hand[card_select_list[0]])
+
                     game = n.send_player_object(game.players[player])
             except:
                 e = sys.exc_info()
@@ -348,6 +538,34 @@ def main():
                     print("error in licit selection event handling")
                     print(e)
                     pass
+            if game.game_phase == PLAY:
+
+                try:
+                    if mouseClicked and playCardConfirmButton.collidepoint(mousex, mousey):
+                        game = n.send("card_was_played")
+                except:
+                    pass
+
+                try:
+                    if mouseClicked and aduTokRect.collidepoint(mousex, mousey):
+                        game.players[player].adu_selected = 'tok'
+                        game = n.send_player_object(game.players[player])
+                    if mouseClicked and aduZoldRect.collidepoint(mousex, mousey):
+                        game.players[player].adu_selected = 'zold'
+                        game = n.send_player_object(game.players[player])
+                    if mouseClicked and aduMakkRect.collidepoint(mousex, mousey):
+                        game.players[player].adu_selected = 'makk'
+                        game = n.send_player_object(game.players[player])
+
+                    if mouseClicked and aduConfirmButton.collidepoint(mousex, mousey):
+                        game = n.send("adu:" + game.players[player].adu_selected)
+
+
+
+                except:
+                    pass
+
+
 
         redrawWindow(DISPLAYSURF, game, player)
 

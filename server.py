@@ -5,6 +5,8 @@ import sys
 import pickle
 from game_elements import *
 from game import Game
+import time
+
 
 # message types:
 
@@ -20,6 +22,9 @@ BIDDING = 'Bidding'
 GAME_PHASE = 'game_phase'
 STARTED = 'started'
 SORTING = 'sorting'
+PLAY = "play"
+
+
 
 
 server = "192.168.178.24"
@@ -54,31 +59,53 @@ def threaded_client(conn, p, game):
                 if not data:
                     break
                 else:
-                    # TODO! milyen bejövő data lehet?
+                    try:
+                        # TODO! milyen bejövő data lehet?
 
-                    if data == "test":
-                        print("in test msg handling")
-                        game.new_popup(data)
-                    elif data == SORTING:
-                        print("in sorting msg handling")
-                        game.players[p].change_sorting()
+                        if data == "test":
+                            print("in test msg handling")
+                            game.new_popup(data)
+                        elif data == SORTING:
+                            print("in sorting msg handling")
+                            game.players[p].change_sorting()
 
-                    elif data == "bid":
-                        print("bid accept called")
-                        game.accept_bid()
-                    elif data == "pickup":
-                        print("pickup called")
-                        game.pickup()
-                    elif data == "passz":
-                        print("pass called")
-                        game.passz()
+                        elif data == "bid":
+                            print("bid accept called")
+                            game.accept_bid()
+                        elif data == "pickup":
+                            print("pickup called")
+                            game.pickup()
+                        elif data == "passz":
+                            print("pass called")
+                            game.passz()
+                        elif data == "card_was_played":
+                            print("card_was_played called")
+                            game.play_card()
+                            conn.sendall(pickle.dumps(game))
+                            if len(game.cards_on_the_table) == 3:
+                                print("all 3 players played a cards, invoking card collection")
+                                time.sleep(2)
+                                game.collect_played_cards()
+                            else:
+                                print("not all players played yet")
+                        elif data.split(":")[0] == "adu":
+                            print("adu msg received")
+                            game.selected_game.adu = data.split(":")[1]
+                        # elif data == "anim_completed":
+                        #     print("anim_completed received")
+                        # elif data == "move_to_middle":
+                        #     print("move_to_middle received")
+                        #     game.move_card_to_middle()
 
-                    # TODO! game_phase-ek állítása
+                        if game.game_phase in [STARTED, INIT] and len(game.players) == 3:
+                            game.initialize()
 
-                    if game.game_phase in [STARTED, INIT] and len(game.players) == 3:
-                        game.initialize()
-
-                    conn.sendall(pickle.dumps(game))
+                        conn.sendall(pickle.dumps(game))
+                    except:
+                        e = sys.exc_info()
+                        print("data was: ", data, type(data))
+                        print("server error in incoming string message handling ", e)
+                        break
 
             except:
                 try:
@@ -90,7 +117,8 @@ def threaded_client(conn, p, game):
 
                 except:
                     e = sys.exc_info()
-                    print("server error in incoming message handling ", e)
+                    print("data was: ", data, type(data))
+                    print("server error in incoming object message handling ", e)
                     break
         except:
             e = sys.exc_info()
@@ -102,6 +130,7 @@ def threaded_client(conn, p, game):
 
 
 game = Game()
+
 
 currentPlayer = 0
 while True:
