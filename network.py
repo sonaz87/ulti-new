@@ -16,21 +16,21 @@ class Network(object):
     def connect(self):
         try:
             self.client.connect(self.addr)
-            return self.client.recv(4096*8).decode()
+            return self.client.recv(4096*16).decode()
         except:
             pass
 
     def send(self, data):
         try:
             self.client.send(str.encode(data))
-            return pickle.loads(self.client.recv(4096*8))
+            return pickle.loads(self.client.recv(4096*16))
         except socket.error as e:
             print(e)
 
     def send_player_object(self, data):
         try:
             self.client.sendall(pickle.dumps(data))
-            return pickle.loads(self.client.recv(4096*8))
+            return pickle.loads(self.client.recv(4096*16))
         except socket.error as e:
             print(e)
 

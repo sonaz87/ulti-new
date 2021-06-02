@@ -8,8 +8,10 @@ STARTED = 'started'
 INIT = 'init'
 BIDDING = 'bidding'
 PLAY = 'play'
+END = 'end'
 
 class Game(object):
+    global last_round_won
     def __init__(self):
         self.players = []
         self.game_phase = STARTED
@@ -22,6 +24,7 @@ class Game(object):
         self.vallalo = ""
         self.card_played = None
         self.cards_on_the_table = []
+        self.last_round_won = None
         self.possible_games = {
             'No Game' : [0],
             'Passz' : [1, Passz(self.players)],
@@ -100,6 +103,12 @@ class Game(object):
             self.players[x].is_dealer = True
             print("isdealer set true: ", self.players[x].is_dealer)
             print("x, player, player.isdealer", x, self.players[x].name, self.players[x].is_dealer)
+        else:
+            for i in range(3):
+                if self.players[i].is_dealer == True:
+                    self.players[i].is_dealer = False
+                    self.players[i-1].is_dealer = True
+
         self.deal_hands()
         for p in self.players:
             p.sort_hand()
@@ -206,11 +215,6 @@ class Game(object):
         print("pass completed")
 
     def play_card(self):
-        # active_counter = 0
-        # for p in self.players:
-        #     if p.is_active:
-        #         active_counter += 1
-        # assert active_counter == 1, "active players amount bad when starting play_card"
         try:
             x = self.get_active_player_index()
             print("in play_card: active player index is :", x)
@@ -232,6 +236,7 @@ class Game(object):
             e = sys.exc_info()
             print(e)
             pass
+
     def get_active_player_index(self):
         index = []
         for p in self.players:
@@ -246,21 +251,6 @@ class Game(object):
                 p.is_active = False
             self.players[should_be_active].is_active = True
             return should_be_active
-
-    # def move_card_to_middle(self):
-    #     print("in game.move_card_to_middle")
-    #     print("players animation completed: ")
-    #     for p in self.players:
-    #         print(p.animation_completed)
-    #     if self.players[0].animation_completed and self.players[1].animation_completed and self.players[2].animation_completed:
-    #         print("animation completed for all players")
-    #         print("self.card_played :", self.card_played)
-    #         self.cards_on_the_table.append([self.card_played[0], self.get_active_player_index()])
-    #         self.card_played = None
-    #         for p in self.players:
-    #             p.animation_completed = False
-    #     print("game.move_card_to_middle completed")
-    #     print("cards in the middle and type: ", self.cards_on_the_table, type(self.cards_on_the_table[0]))
 
 
     def who_won_round(self):
@@ -345,7 +335,9 @@ class Game(object):
         print(self.players[x].name + " has won this round")
         self.players[x].discard.append(self.cards_on_the_table[:])
         if self.selected_game.round == 10:
+            self.last_round_won = x
             self.selected_game.player_points[x] += 10
+            self.game_phase = END
             self.selected_game.evaluate()
             self.display_results()
 
@@ -362,18 +354,82 @@ class Game(object):
             print(p.name, p.discard)
 
 
+    def getHuszNegyven(self, adu):
+        x = self.get_active_player_index()
+        colordict = {
+            'zold' : 'Zöld',
+            'tok' : 'Tök',
+            'makk' : "Makk",
+            'piros' : 'piros'
+            }
+        husz = 0
+        negyven = 0
+        for key, value in colordict.items():
+            if value + " felső" in self.players[x].hand and value + " király" in self.players[x].hand:
+                if key == adu:
+                    self.selected_game.player_points[x] += 40
+                    negyven += 1
+                else:
+                    self.selected_game.player_points[x] += 40
+                    husz += 1
+        if negyven == 1:
+            self.new_popup(self.players[x].name + ": van negyvenem")
+        if husz > 0:
+            self.new_popup(self.players[x].name + ": van " + str(husz) + " húszam")
+        self.selected_game.bemondtak.append(x)
 
+    def kontra(self, num):
+        if self.selected_game.name not in ["Betli", "Rebetli", "Színtelen durchmarsch", "Redurchmarsch", "Terített betli", "Színtelen Terített Durchmarsch"]:
+            jatek = self.selected_game.jatek_lista[num]
+            thisround = self.selected_game.round
+            self.selected_game.kontra[jatek][thisround][1] = True
+            if thisround % 2 == 1:
+                self.selected_game.kontra[jatek][thisround][2] = True
+
+
+        else:
+            jatek = self.selected_game.jatek_lista[num]
+            thisround = self.selected_game.round
+
+            self.selected_game.vedok = [0,1,2]
+            self.selected_game.vedok.remove(self.selected_game.vallalo)
+
+            self.selected_game.kontra[jatek][thisround][1] = True
+            if thisround % 2 == 1:
+                self.selected_game.kontra[jatek][thisround][self.selected_game.vedok.index(self.get_active_player_index())] = True
+
+        self.new_popup(self.player[self.get_active_player_index()].name + " - " + self.selected_game.kontra_alap[self.selected_game.round][0] + self.selected_game.jatek_lista[num][0])
 
         #TODO display_results()
 
     def display_results(self):
-        print("need to display results")
+        while not self.players[0].ready_for_next_round or not self.players[1].ready_for_next_round or not self.players[2].ready_for_next_round:
+            pass
+
+        self.reset()
 
     def reset(self):
         # TODO! save game details for later
         print("reset called")
-        # self.game_phase = STARTED
-        # self.card_played = []
-        # self.selected_game = None
-        # self.current_game = 'No Game'
-        # self.new_popup("Új játék")
+
+        self.talon.clear()
+        self.bidding_list = ["", "", ""]
+        self.vallalo = ""
+        self.card_played = None
+        self.cards_on_the_table.clear()
+        self.card_played.clear()
+        self.selected_game = None
+        self.current_game = 'No Game'
+        self.new_popup("Új játék")
+
+        for p in self.players:
+            p.hand.clear()
+            p.discard.clear()
+            p.card_played = None
+            p.selected_cards.clear()
+            self.wants_to_bid = False
+            self.licit_selected = None
+            self.adu_selected = None
+            self.ready_for_next_round = False
+
+        self.initialize()

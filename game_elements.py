@@ -6,6 +6,7 @@ Created on Mon May 17 14:25:07 2021
 """
 
 from random import shuffle
+import copy
 # from random import choices
 # import pygame
 # import sys
@@ -31,6 +32,7 @@ class Player(object):
         self.wants_to_bid = False
         self.licit_selected = None
         self.adu_selected = None
+        self.ready_for_next_round = False
 
     def update_all(self, other):
         self.is_dealer = other.is_dealer
@@ -44,6 +46,7 @@ class Player(object):
         self.licit_selected = other.licit_selected
         self.animation_completed = other.animation_completed
         self.adu_selected = other.adu_selected
+        self.ready_for_next_round = other.ready_for_next_round
 
     def get_name(self):
         return self.name
@@ -117,6 +120,12 @@ class Card(object):
 
     def __eq__(self, other):
         if self.name == other.name:
+            return True
+        else:
+            return False
+
+    def __eq__(self, name):
+        if self.name == name:
             return True
         else:
             return False
@@ -198,6 +207,22 @@ class Alapjatek(object):
         self.player_points = [0, 0, 0]
         self.players = players
         self.talon = None
+        self.can_be_lost = False
+        self.vedok = list()
+        self.kontra_alap = {
+            0 : ['', True],
+            1 : ['Kontra', False, False],
+            2 : ['Rekontra', False],
+            3 : ['Szubkontra', False, False],
+            4 : ['Mordkontra', False],
+            5 : ['Hirskontra', False, False],
+            6 : ['Fedák Sári', False],
+            7 : ['Kerekes bicikli', False, False],
+            8 : ['Darth Vader', False],
+            9 : ['Krúdy-fröccs', False, False],
+            10 : ['Chuck Norris', False]
+        }
+        self.kontra = dict()
 
 class Szines(Alapjatek):
     def __init__(self, players):
@@ -260,7 +285,7 @@ class Szines(Alapjatek):
                         return False
                 else:
                     return True
-
+        # ha két kártya van lenn
         elif len(cards_on_the_table) == 2:
             # mindkét kártya adu
             if cards_on_the_table[0][0].color == self.adu and cards_on_the_table[1][0].color == self.adu:
@@ -307,10 +332,34 @@ class Szines(Alapjatek):
                     return True
 
         # ha mindkettő nem adu
+            #TODO megnézni azt az esetet, ha a második kártya bedobott lap - ezt itt átnézni rendesen, mert szar
             elif cards_on_the_table[0][0].color != self.adu and cards_on_the_table[1][0].color != self.adu:
                 if is_color_available(cards_on_the_table[0][0].color, hand):
-                    if cards_on_the_table[0][0].bigger_than(cards_on_the_table[1][0],self.number_values):
-                        if has_bigger_card(cards_on_the_table[0][0], hand):
+                    if cards_on_the_table[0][0].color == cards_on_the_table[1][0].color:
+                        if cards_on_the_table[0][0].bigger_than(cards_on_the_table[1][0],self.number_values):
+                            if has_bigger_card(cards_on_the_table[0][0], hand):
+                                if card_to_be_played.bigger_than(cards_on_the_table[0][0], self.number_values) and card_to_be_played.color == cards_on_the_table[0][0].color:
+                                    return True
+                                else:
+                                    return False
+                            else:
+                                if card_to_be_played.color == cards_on_the_table[0][0].color:
+                                    return True
+                                else:
+                                    return False
+                        else:
+                            if has_bigger_card(cards_on_the_table[1][0], hand):
+                                if card_to_be_played.bigger_than(cards_on_the_table[1][0], self.number_values) and card_to_be_played.color == cards_on_the_table[1][0].color:
+                                    return True
+                                else:
+                                    return False
+                            else:
+                                if card_to_be_played.color == cards_on_the_table[1][0].color:
+                                    return True
+                                else:
+                                    return False
+                    else:
+                        if has_bigger_card([cards_on_the_table[0][0]],self.number_values):
                             if card_to_be_played.bigger_than(cards_on_the_table[0][0], self.number_values) and card_to_be_played.color == cards_on_the_table[0][0].color:
                                 return True
                             else:
@@ -320,17 +369,7 @@ class Szines(Alapjatek):
                                 return True
                             else:
                                 return False
-                    else:
-                        if has_bigger_card(cards_on_the_table[1][0], hand):
-                            if card_to_be_played.bigger_than(cards_on_the_table[1][0], self.number_values) and card_to_be_played.color == cards_on_the_table[1][0].color:
-                                return True
-                            else:
-                                return False
-                        else:
-                            if card_to_be_played.color == cards_on_the_table[0][0].color:
-                                return True
-                            else:
-                                return False
+
 
                 else:
                     if is_color_available(self.adu, hand):
@@ -379,6 +418,16 @@ class Passz(Szines):
         self.adu = None
         self.points = 1
         self.can_be_lost = False
+        self.vanHuszNegyven = True
+        self.bemondtak = []
+        self.name = "Passz"
+        self.jatekok = {"Passz" : [False, 0]}
+        self.jatek_lista = ["Passz"]
+        self.csendes_szaz_lehet = True
+        self.csendes_ulti_lehet = True
+        self.csendes_duri_lehet = True
+        for j in self.jatekok.keys():
+            self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
 
     def set_adu(self, adu):
@@ -403,6 +452,13 @@ class Passz(Szines):
         vallalo_points = self.player_points[self.vallalo]
         vedo_points = 0
 
+        for g in self.jatekok.keys():
+            highest_kontra = 0
+            for key, value in self.kontra[g]:
+                if True in value:
+                    highest_kontra = key
+            self.jatekok[g][1] = highest_kontra
+
         for i in self.player_points:
             print("player points after counting discard:", i)
             if self.player_points.index(i) != self.vallalo:
@@ -413,29 +469,88 @@ class Passz(Szines):
                 vedo_points += 10
 
         if vallalo_points > vedo_points:
+            self.jatekok["Passz"][0] = True
             print("vallalo nyert: ", self.vallalo, vallalo_points)
             print("védő pontok:", vedo_points)
-            self.players[self.vallalo].points += self.points * 2
-            for p in self.players:
-                if self.players.index(p) != self.vallalo:
-                    p.points -= self.points
+            if vallalo_points < 100:
+                self.players[self.vallalo].points += self.points * 2 * 2 ** self.jatekok["Passz"][1]
+                for p in self.players:
+                    if self.players.index(p) != self.vallalo:
+                        p.points -= self.points * 2 ** self.jatekok["Passz"][1]
+            else:
+                print("csendes száz")
+                self.players[self.vallalo].points += self.points * 2 * 2 ** self.jatekok["Passz"][1] *2
+                for p in self.players:
+                    if self.players.index(p) != self.vallalo:
+                        p.points -= self.points * 2 ** self.jatekok["Passz"][1] * 2
         else:
             print("vedok nyertek, védő pontok: ", vedo_points)
             print("vállaló pontok: ", vallalo_points)
-            self.players[self.vallalo].points -= self.points * 2
-            for p in self.players:
-                if self.players.index(p) != self.vallalo:
-                    p.points += self.points
+            if vedo_points < 100:
+                self.players[self.vallalo].points -= self.points * 2 * 2 ** self.jatekok["Passz"][1]
+                for p in self.players:
+                    if self.players.index(p) != self.vallalo:
+                        p.points += self.points * 2 ** self.jatekok["Passz"][1]
+            else:
+                print("csendes száz")
+                self.players[self.vallalo].points -= self.points * 2 * 2 ** self.jatekok["Passz"][1] * 2
+                for p in self.players:
+                    if self.players.index(p) != self.vallalo:
+                        p.points += self.points * 2 ** self.jatekok["Passz"][1] * 2
+
+        if len(self.players[self.vedok[0]].discard) == 0 and len(self.players[self.vedok[1]].discard) == 0:
+            print("csendes duri")
+            self.players[self.vallalo].points += 6
+            self.players[self.vedok[0]].points -= 3
+            self.players[self.vedok[1]].points -= 3
+        colors = {
+            "zold": "Zöld",
+            "makk": "Makk",
+            "tok": "Tök",
+            "piros": "Piros"
+        }
+
+        if colors[self.adu] + " hetes" in self.players[self.vallalo].discard[-1] and last_round_won == self.vallalo:
+            print("csendes ulti")
+            self.players[self.vallalo].points += 4
+            self.players[self.vedok[0]].points -= 2
+            self.players[self.vedok[1]].points -= 2
 
 
-
-
-class PirosPassz(Szines):
-    pass
+class PirosPassz(Passz):
+    def __init__(self, players):
+        super().__init__(players)
+        self.adu = 'piros'
+        self.points = 2
+        self.name = "Passz"
 
 
 class NegyvenSzaz(Szines):
-    pass
+    def __init__(self, players):
+        super().__init__(players)
+        self.adu = None
+        self.points = 4
+        self.can_be_lost = False
+        self.vanHuszNegyven = False
+        self.name = "Negyven-száz"
+        self.jatekok = {"Negyven-száz": [False, 0]}
+        self.jatek_lista = ["Negyven-száz"]
+        self.csendes_ulti_lehet = True
+        self.csendes_duri_lehet = True
+        self.has_40_at_start = False
+
+    def check_for_40(self):
+        colors = {
+            "zold": "Zöld",
+            "makk": "Makk",
+            "tok": "Tök",
+            "piros": "Piros"
+        }
+        if colors[self.adu] + " felső" in self.players[self.vallalo].hand and colors[self.adu] + " király" in self.players[self.vallalo].hand:
+            self.has_40_at_start = True
+
+    def evaluate(self):
+        pass
 
 
 class Ulti(Szines):

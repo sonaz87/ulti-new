@@ -52,7 +52,7 @@ def threaded_client(conn, p, game):
 
     while True:
         try:
-            data = conn.recv(4096 * 8)
+            data = conn.recv(4096 * 16)
             try:
                 data = data.decode()
 
@@ -91,12 +91,15 @@ def threaded_client(conn, p, game):
                         elif data.split(":")[0] == "adu":
                             print("adu msg received")
                             game.selected_game.adu = data.split(":")[1]
-                        # elif data == "anim_completed":
-                        #     print("anim_completed received")
-                        # elif data == "move_to_middle":
-                        #     print("move_to_middle received")
-                        #     game.move_card_to_middle()
+                            if hasattr(game.selected_game, 'has_40_at_start'):
+                                game.selected_game.check_for_40()
+                            if hasattr(game.selected_game, 'has_20_at_start'):
+                                game.selected_game.check_for_20()
 
+                        elif data == "husznegyven":
+                            game.getHuszNegyven(game.selected_game.adu)
+                        elif data.split(":")[0] == "kontra":
+                            game.kontra(data.split(":")[1])
                         if game.game_phase in [STARTED, INIT] and len(game.players) == 3:
                             game.initialize()
 

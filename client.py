@@ -27,6 +27,7 @@ SORTING = 'sorting'
 SZINES = "szines"
 SZINTELEN = 'szintelen'
 PLAY = 'play'
+END = 'end'
 
 # colors
 
@@ -152,6 +153,11 @@ def redrawWindow(DISPLAYSURF, game, player):
     global aduMakkRect
     global aduTokRect
     global aduConfirmButton
+    global huszNegyvenButton
+    global kontraButton
+    global kontraConfirms
+    global cancelKontraButton
+    global startOverButton
 
 
     popupSurf1 = fontObj2.render(game.get_popups()[0], True, WHITE)
@@ -171,17 +177,17 @@ def redrawWindow(DISPLAYSURF, game, player):
     # name tags:
     try:
         if player == 0:
-            p1NameSurf = fontObj.render(str(game.players[0].name) + " - " + str(game.players[0].points), True, WHITE)
-            p2NameSurf = fontObj.render(str(game.players[1].name) + " - " + str(game.players[1].points), True, WHITE)
-            p3NameSurf = fontObj.render(str(game.players[2].name) + " - " + str(game.players[2].points), True, WHITE)
+            p1NameSurf = fontObj.render(str(game.players[0].name) + " : " + str(game.players[0].points), True, WHITE)
+            p2NameSurf = fontObj.render(str(game.players[1].name) + " : " + str(game.players[1].points), True, WHITE)
+            p3NameSurf = fontObj.render(str(game.players[2].name) + " : " + str(game.players[2].points), True, WHITE)
         elif player == 1:
-            p1NameSurf = fontObj.render(str(game.players[1].name) + " - " + str(game.players[1].points), True, WHITE)
-            p2NameSurf = fontObj.render(str(game.players[2].name) + " - " + str(game.players[2].points), True, WHITE)
-            p3NameSurf = fontObj.render(str(game.players[0].name) + " - " + str(game.players[0].points), True, WHITE)
+            p1NameSurf = fontObj.render(str(game.players[1].name) + " : " + str(game.players[1].points), True, WHITE)
+            p2NameSurf = fontObj.render(str(game.players[2].name) + " : " + str(game.players[2].points), True, WHITE)
+            p3NameSurf = fontObj.render(str(game.players[0].name) + " : " + str(game.players[0].points), True, WHITE)
         elif player == 2:
-            p1NameSurf = fontObj.render(str(game.players[2].name) + " - " + str(game.players[2].points), True, WHITE)
-            p2NameSurf = fontObj.render(str(game.players[0].name) + " - " + str(game.players[0].points), True, WHITE)
-            p3NameSurf = fontObj.render(str(game.players[1].name) + " - " + str(game.players[1].points), True, WHITE)
+            p1NameSurf = fontObj.render(str(game.players[2].name) + " : " + str(game.players[2].points), True, WHITE)
+            p2NameSurf = fontObj.render(str(game.players[0].name) + " : " + str(game.players[0].points), True, WHITE)
+            p3NameSurf = fontObj.render(str(game.players[1].name) + " : " + str(game.players[1].points), True, WHITE)
     except:
         p1NameSurf = fontObj.render("Várakozás a többiekre", True, WHITE)
         p2NameSurf = fontObj.render("Várakozás a többiekre", True, WHITE)
@@ -240,15 +246,15 @@ def redrawWindow(DISPLAYSURF, game, player):
 
     # game display objects
     if game.game_phase == BIDDING:
+
         try:
-            selectedGameSurf = fontObj.render(game.vallao + " - " + game.current_game, True, WHITE)
-            selectedGameRect = selectedGameSurf.get_rect()
-            selectedGameRect.center = (700, 50)
-            DISPLAYSURF.blit(selectedGameSurf, selectedGameRect)
+            gameDetailSurf = fontObj.render(game.players[int(game.vallalo)].name + " - " + game.current_game, True, WHITE)
+            gameDetailRect = gameDetailSurf.get_rect()
+            gameDetailRect.center = (700, 30)
+            DISPLAYSURF.blit(gameDetailSurf, gameDetailRect)
+
         except:
             pass
-
-
     if game.game_phase == BIDDING and game.players[player].is_active:
         # akar-e licitálni:
         if not game.players[player].wants_to_bid:
@@ -283,6 +289,27 @@ def redrawWindow(DISPLAYSURF, game, player):
     # play phase
 
     if game.game_phase == PLAY:
+        try:
+            if game.selected_game.adu != None:
+                szinek = {
+                    'zold': "Zöld",
+                    'makk': "Makk",
+                    "tok": "Tök",
+                    "piros": "Piros"
+                }
+                gameDetailSurf = fontObj.render(game.players[game.selected_game.vallalo].name + " - " + szinek[game.selected_game.adu] + " " + game.selected_game.name, True, WHITE)
+                gameDetailRect = gameDetailSurf.get_rect()
+                gameDetailRect.center = (700, 30)
+                DISPLAYSURF.blit(gameDetailSurf, gameDetailRect)
+            else:
+                gameDetailSurf = fontObj.render(game.players[game.selected_game.vallalo].name + " - " + game.selected_game.name, True, WHITE)
+                gameDetailRect = gameDetailSurf.get_rect()
+                gameDetailRect.center = (700, 30)
+                DISPLAYSURF.blit(gameDetailSurf, gameDetailRect)
+
+        except:
+            pass
+
         if game.players[player].is_active:
             try:
                 if game.selected_game.is_valid_choice(game.cards_on_the_table, game.players[player].selected_cards[0], game.players[player].hand):
@@ -295,7 +322,7 @@ def redrawWindow(DISPLAYSURF, game, player):
                 pass
             # adu választás az első körben
             try:
-                if game.selected_game.round == 1 and game.selected_game.adu == None:
+                if game.selected_game.round == 1 and game.selected_game.adu == None and issubclass(type(game.selected_game), Szines):
                     adu_box = pygame.draw.rect(DISPLAYSURF, LIGHT_GREY, (600, 150, 200, 200))
                     aduTitleSurf = fontObj.render('Válassz adut!', True, WHITE)
                     adutTitleRect = aduTitleSurf.get_rect()
@@ -325,6 +352,72 @@ def redrawWindow(DISPLAYSURF, game, player):
 
             except:
                 print("error in displaying adu selection")
+                e = sys.exc_info()
+                print(e)
+                pass
+            # húsz - negyven
+            try:
+                if game.players[player].is_active and game.selected_game.round == 1 and game.selected_game.vanHuszNegyven == True and game.selected_game.adu != None and player not in game.selected_game.bemondtak:
+                    huszNegyvenSurf = fontObj.render("Húsz-negyven bemondása", True, WHITE)
+                    huszNegyvenRect = huszNegyvenSurf.get_rect()
+                    huszNegyvenRect.center = (1100, 700)
+                    huszNegyvenButton = pygame.draw.rect(DISPLAYSURF, DARK_GREY, huszNegyvenRect)
+                    DISPLAYSURF.blit(huszNegyvenSurf, huszNegyvenRect)
+
+            except:
+                pass
+
+            # kontrák
+            try:
+                is_kontra_available = False
+                for g in game.selected_game.kontra.keys():
+                    if True in game.selected_game.kontra[g][game.selected_game.round -1]:
+                        is_kontra_available = True
+                if is_kontra_available == True and display_kontra == False and game.selected_game.round % 2 == 1 and player != game.selected_game.vallalo:
+                    kontraSurf = fontObj.render("Kontra", True, WHITE)
+                    kontraRect = kontraSurf.get_rect()
+                    kontraRect.center = (1200, 200)
+                    kontraButton = pygame.draw.rect(DISPLAYSURF, DARK_GREY, kontraRect)
+                    DISPLAYSURF.blit(kontraSurf, kontraRect)
+                elif game.selected_game.round % 2 == 0 and is_kontra_available == True and player == game.selected_game.vallalo and display_kontra == True:
+                    kontraSurf = fontObj.render("Kontra", True, WHITE)
+                    kontraRect = kontraSurf.get_rect()
+                    kontraRect.center = (1200, 200)
+                    kontraButton = pygame.draw.rect(DISPLAYSURF, DARK_GREY, kontraRect)
+                    DISPLAYSURF.blit(kontraSurf, kontraRect)
+
+                if display_kontra == True:
+
+                        kontraSurfs = []
+                        kontraRects = []
+                        kontraConfirms = []
+                        okSurf = fontObj3.render("OK", True, WHITE)
+
+                        for g in game.selected_game.kontra.keys():
+                            kontraSurfs.append(fontObj3.render(g, True, BLACK))
+                            kontraRects.append(kontraSurfs[-1].get_rect())
+
+                        pygame.draw.rect(DISPLAYSURF, LIGHT_GREY, (1100, 200, 200, 400))
+                        displacement = 250
+                        for i in range(len(kontraSurfs)):
+                            kontraRects[i].right = 1180
+                            kontraRects[i].top = displacement
+                            DISPLAYSURF.blit(kontraSurfs[i], kontraRects[i])
+                            confirmRect = okSurf.get_rect()
+                            confirmRect.left = 1220
+                            confirmRect.top = displacement
+                            kontraConfirms.append(pygame.draw.rect(DISPLAYSURF, DARK_GREY, confirmRect))
+                            DISPLAYSURF.blit(okSurf, confirmRect)
+                            displacement += 40
+
+                        cancelkontraSurf = fontObj.render("Mégse", True, WHITE)
+                        cancelkontraRect = cancelkontraSurf.get_rect()
+                        cancelkontraRect.center = (1200, 530)
+                        cancelKontraButton = pygame.draw.rect(DISPLAYSURF, DARK_GREY, cancelkontraRect)
+                        DISPLAYSURF.blit(cancelkontraSurf, cancelkontraRect)
+
+            except:
+                print("error in displaying kontra selection")
                 e = sys.exc_info()
                 print(e)
                 pass
@@ -361,7 +454,23 @@ def redrawWindow(DISPLAYSURF, game, player):
             e = sys.exc_info()[0]
             print(e)
             pass
+    if game.game_phase == END:
+        pygame.draw.rect(DISPLAYSURF, LIGHT_GREY, (200, 100, 1000, 700))
+        resultSurfs = []
+        resultRects = []
+        displacement = 200
+        for key, value in game.selected_game.jatekok.items():
+            resultSurfs.append(fontObj.render(game.selected_game.kontra[key][0] + " " +  key + " - " + "Nyerve" if items[1] else "Bukva"), True, BLACK)
+            resultRects.append(resultSurfs[-1].get_rect())
+            resultRects[-1].left = 300
+            resultRects[-1].top = displacement
+            DISPLAYSURF.blit(resultSurfs[-1], resultRects[-1])
 
+        startOverSurf = fontObj.render("Új játék", True, WHITE)
+        startOverRect = startOverSurf.get_rect()
+        startOverRect.center = (700, 650)
+        startOverButton = pygame.draw.rect(DISPLAYSURF, DARK_GREY, startOverRect)
+        DISPLAYSURF.blit(startOverSurf, startOverRect)
 
     pygame.display.update()
 
@@ -375,6 +484,8 @@ def main():
     global p1PlayedCardEndPos
     global p2PlayedCardEndPos
     global client_animation_completed
+    global display_kontra
+    display_kontra = False
     client_animation_completed = False
     run = True
     clock = pygame.time.Clock()
@@ -538,11 +649,19 @@ def main():
                     print("error in licit selection event handling")
                     print(e)
                     pass
+
+            # play section
             if game.game_phase == PLAY:
 
                 try:
                     if mouseClicked and playCardConfirmButton.collidepoint(mousex, mousey):
                         game = n.send("card_was_played")
+                except:
+                    pass
+
+                try:
+                    if mouseClicked and huszNegyvenButton.collidepoint(mousex, mousey):
+                        game = n.send("husznegyven")
                 except:
                     pass
 
@@ -559,13 +678,34 @@ def main():
 
                     if mouseClicked and aduConfirmButton.collidepoint(mousex, mousey):
                         game = n.send("adu:" + game.players[player].adu_selected)
-
-
-
+                except:
+                    pass
+                try:
+                    if mouseClicked and kontraButton.collidepoint(mousex, mousey):
+                        print("kontra clicked")
+                        display_kontra = True
+                except:
+                    pass
+                try:
+                    for i in range(len(kontraConfirms)):
+                        if mouseClicked and kontraConfirms[i].collidepoint(mousex, mousey):
+                            game = n.send("kontra:" + str(i))
                 except:
                     pass
 
+                try:
+                    if mouseClicked and cancelKontraButton.collidepoint(mousex, mousey):
+                        display_kontra = False
 
+                except:
+                    pass
+            if game.game_phase == END:
+                try:
+                    if mouseClicked and startOverButton.collidepoint(mousex, mousey):
+                        game.players[player].ready_for_next_round = True
+                        game = n.send_player_object(game.players[player])
+                except:
+                    pass
 
         redrawWindow(DISPLAYSURF, game, player)
 
