@@ -217,20 +217,22 @@ class Game(object):
     def play_card(self):
         try:
             x = self.get_active_player_index()
-            print("in play_card: active player index is :", x)
+            print(" [*] in play_card:: active player index is :", x)
             if len(self.players[x].selected_cards) == 1 and self.players[x].card_played == None:
-                self.players[x].hand.remove(self.players[x].selected_cards[0])
                 self.players[x].card_played = copy.deepcopy(self.players[x].selected_cards[0])
                 self.card_played = [copy.deepcopy(self.players[x].selected_cards[0]), x]
+                self.players[x].hand.remove(self.players[x].selected_cards[0])
                 self.players[x].selected_cards.clear()
                 self.cards_on_the_table.append([self.players[x].card_played, x])
                 self.players[x].is_active = False
                 if len(self.cards_on_the_table) < 3:
                     self.players[x - 1].is_active = True
                     self.new_popup(str(self.players[x - 1].name) + " jön")
-                    print("next active player set, player activeness at end of play_card: ", self.players[0].is_active,self.players[1].is_active, self.players[2].is_active )
-                print("cards on the table: ", self.cards_on_the_table)
-
+                    print(" [*] in play_card: next active player set, player activeness at end of play_card: ", self.players[0].is_active,self.players[1].is_active, self.players[2].is_active )
+                print(" [*] in play_card: cards on the table: ", self.cards_on_the_table)
+            else:
+                print(" [*] in play_card: active player selected and played cards: ", self.players[x].selected_cards, self.players[x].card_played)
+            self.remove_discards_from_hand()
         except:
             print("error in game.play_card")
             e = sys.exc_info()
@@ -242,15 +244,24 @@ class Game(object):
         for p in self.players:
             if p.is_active:
                 index.append(self.players.index(p))
-        print("in get_active_player_index: ", 0, self.players[0].is_active, 1, self.players[1].is_active, 2, self.players[2].is_active)
+        print(" [*] in get_active_player_index: ", 0, self.players[0].is_active, 1, self.players[1].is_active, 2, self.players[2].is_active)
         if len(index) == 1:
             return index[0]
         else:
-            should_be_active =  self.cards_on_the_table[-1][1] -1
-            for p in self.players:
-                p.is_active = False
-            self.players[should_be_active].is_active = True
-            return should_be_active
+            if len(self.cards_on_the_table) == 0:
+                for p in self.players:
+                    p.is_active = False
+                self.players[self.last_round_won].is_active = True
+            else:
+                x = self.cards_on_the_table[-1][1]
+                for p in self.players:
+                    p.is_active = False
+                self.players[x-1].is_active = True
+
+
+            print(" [*] in get_active_player_index after fix: ", 0, self.players[0].is_active, 1, self.players[1].is_active, 2,
+                  self.players[2].is_active)
+            return x
 
 
     def who_won_round(self):
@@ -319,6 +330,20 @@ class Game(object):
                     return cards_to_consider[2][1]
 
 
+    def remove_discards_from_hand(self):
+        discards = []
+        for p in self.players:
+            for round in p.discard:
+                for c in round:
+                    discards.append(c[0])
+
+        for c in self.cards_on_the_table:
+            discards.append(c[0])
+
+        for c in discards:
+            for p in self.players:
+                if c in p.hand:
+                    p.hand.remove(c)
 
     def collect_played_cards(self):
         # megnézi, ki vitte, berakja a discardjába
@@ -333,9 +358,10 @@ class Game(object):
         x = self.who_won_round()
         self.new_popup(self.players[x].name + " vitte")
         print(self.players[x].name + " has won this round")
+        self.last_round_won = x
         self.players[x].discard.append(self.cards_on_the_table[:])
         if self.selected_game.round == 10:
-            self.last_round_won = x
+
             self.selected_game.player_points[x] += 10
             self.game_phase = END
             self.selected_game.evaluate()
@@ -349,9 +375,12 @@ class Game(object):
         self.players[x].is_active = True
         self.cards_on_the_table.clear()
 
+        self.remove_discards_from_hand()
+
         print("dicards after collect_played_cards")
         for p in self.players:
             print(p.name, p.discard)
+
 
 
     def getHuszNegyven(self, adu):
@@ -360,7 +389,7 @@ class Game(object):
             'zold' : 'Zöld',
             'tok' : 'Tök',
             'makk' : "Makk",
-            'piros' : 'piros'
+            'piros' : 'Piros'
             }
         husz = 0
         negyven = 0
@@ -370,7 +399,7 @@ class Game(object):
                     self.selected_game.player_points[x] += 40
                     negyven += 1
                 else:
-                    self.selected_game.player_points[x] += 40
+                    self.selected_game.player_points[x] += 20
                     husz += 1
         if negyven == 1:
             self.new_popup(self.players[x].name + ": van negyvenem")
@@ -379,6 +408,7 @@ class Game(object):
         self.selected_game.bemondtak.append(x)
 
     def kontra(self, num):
+        num = int(num)
         if self.selected_game.name not in ["Betli", "Rebetli", "Színtelen durchmarsch", "Redurchmarsch", "Terített betli", "Színtelen Terített Durchmarsch"]:
             jatek = self.selected_game.jatek_lista[num]
             thisround = self.selected_game.round
@@ -398,15 +428,16 @@ class Game(object):
             if thisround % 2 == 1:
                 self.selected_game.kontra[jatek][thisround][self.selected_game.vedok.index(self.get_active_player_index())] = True
 
-        self.new_popup(self.player[self.get_active_player_index()].name + " - " + self.selected_game.kontra_alap[self.selected_game.round][0] + self.selected_game.jatek_lista[num][0])
+        self.new_popup(self.players[self.get_active_player_index()].name + " - " + self.selected_game.kontra_alap[self.selected_game.round][0] + " " + self.selected_game.jatek_lista[num])
 
         #TODO display_results()
 
     def display_results(self):
-        while not self.players[0].ready_for_next_round or not self.players[1].ready_for_next_round or not self.players[2].ready_for_next_round:
+        if not self.players[0].ready_for_next_round or not self.players[1].ready_for_next_round or not self.players[2].ready_for_next_round:
             pass
 
-        self.reset()
+        else:
+            self.reset()
 
     def reset(self):
         # TODO! save game details for later

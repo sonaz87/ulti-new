@@ -371,7 +371,9 @@ def redrawWindow(DISPLAYSURF, game, player):
             try:
                 is_kontra_available = False
                 for g in game.selected_game.kontra.keys():
+                    # print(" [*]  in kontra display, game.selected_game.kontra[g][game.selected_game.round -1]", game.selected_game.kontra[g][game.selected_game.round -1])
                     if True in game.selected_game.kontra[g][game.selected_game.round -1]:
+                        # print("kontra available")
                         is_kontra_available = True
                 if is_kontra_available == True and display_kontra == False and game.selected_game.round % 2 == 1 and player != game.selected_game.vallalo:
                     kontraSurf = fontObj.render("Kontra", True, WHITE)
@@ -379,7 +381,7 @@ def redrawWindow(DISPLAYSURF, game, player):
                     kontraRect.center = (1200, 200)
                     kontraButton = pygame.draw.rect(DISPLAYSURF, DARK_GREY, kontraRect)
                     DISPLAYSURF.blit(kontraSurf, kontraRect)
-                elif game.selected_game.round % 2 == 0 and is_kontra_available == True and player == game.selected_game.vallalo and display_kontra == True:
+                elif is_kontra_available == True and display_kontra == False and game.selected_game.round % 2 == 0 and player == game.selected_game.vallalo:
                     kontraSurf = fontObj.render("Kontra", True, WHITE)
                     kontraRect = kontraSurf.get_rect()
                     kontraRect.center = (1200, 200)
@@ -455,22 +457,23 @@ def redrawWindow(DISPLAYSURF, game, player):
             print(e)
             pass
     if game.game_phase == END:
-        pygame.draw.rect(DISPLAYSURF, LIGHT_GREY, (200, 100, 1000, 700))
-        resultSurfs = []
-        resultRects = []
-        displacement = 200
-        for key, value in game.selected_game.jatekok.items():
-            resultSurfs.append(fontObj.render(game.selected_game.kontra[key][0] + " " +  key + " - " + "Nyerve" if items[1] else "Bukva"), True, BLACK)
-            resultRects.append(resultSurfs[-1].get_rect())
-            resultRects[-1].left = 300
-            resultRects[-1].top = displacement
-            DISPLAYSURF.blit(resultSurfs[-1], resultRects[-1])
+        if game.players[player].ready_for_next_round == False:
+            pygame.draw.rect(DISPLAYSURF, LIGHT_GREY, (200, 100, 1000, 700))
+            resultSurfs = []
+            resultRects = []
+            displacement = 200
+            for key, value in game.selected_game.jatekok.items():
+                resultSurfs.append(fontObj.render(game.selected_game.kontra[key][0][0] + " " +  key + " - " + ("Nyerve" if value[1] else "Bukva"), True, BLACK))
+                resultRects.append(resultSurfs[-1].get_rect())
+                resultRects[-1].left = 300
+                resultRects[-1].top = displacement
+                DISPLAYSURF.blit(resultSurfs[-1], resultRects[-1])
 
-        startOverSurf = fontObj.render("Új játék", True, WHITE)
-        startOverRect = startOverSurf.get_rect()
-        startOverRect.center = (700, 650)
-        startOverButton = pygame.draw.rect(DISPLAYSURF, DARK_GREY, startOverRect)
-        DISPLAYSURF.blit(startOverSurf, startOverRect)
+            startOverSurf = fontObj.render("Új játék", True, WHITE)
+            startOverRect = startOverSurf.get_rect()
+            startOverRect.center = (700, 650)
+            startOverButton = pygame.draw.rect(DISPLAYSURF, DARK_GREY, startOverRect)
+            DISPLAYSURF.blit(startOverSurf, startOverRect)
 
     pygame.display.update()
 
@@ -699,13 +702,14 @@ def main():
 
                 except:
                     pass
-            if game.game_phase == END:
-                try:
+            try:
+                if game.game_phase == END:
                     if mouseClicked and startOverButton.collidepoint(mousex, mousey):
                         game.players[player].ready_for_next_round = True
                         game = n.send_player_object(game.players[player])
-                except:
-                    pass
+                        game = n.send("reset")
+            except:
+                pass
 
         redrawWindow(DISPLAYSURF, game, player)
 

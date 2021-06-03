@@ -410,6 +410,84 @@ class Szintelen(Alapjatek):
     def __init__(self, players):
         super().__init__(players)
         self.number_values = ["hetes", "nyolcas", "kilences", "tizes", "also", "felso", "kiraly", "asz"]
+        self.round = 1
+
+
+    def is_valid_choice(self, cards_on_the_table, card_to_be_played, hand):
+
+        def is_color_available(color_to_match, hand):
+            for card in hand:
+                if card.color == color_to_match:
+                    return True
+            return False
+
+        def has_bigger_card(card1, hand):
+            for c in hand:
+                if c.bigger_than(card1,self.number_values):
+                    return True
+            return False
+
+        # ha nincs lenn semmi
+
+        if len(cards_on_the_table) == 0:
+            return True
+
+        elif len(cards_on_the_table) == 1:
+            if is_color_available(cards_on_the_table[0][0].color, hand):
+                if has_bigger_card(cards_on_the_table[0][0], hand):
+                    if card_to_be_played.bigger_than(cards_on_the_table[0][0]) and card_to_be_played.color == cards_on_the_table[0][0].color:
+                        return True
+                    else:
+                        return False
+                else:
+                    if card_to_be_played.color == cards_on_the_table[0][0].color:
+                        return True
+                    else:
+                        return False
+            return True
+
+        elif len(cards_on_the_table) == 2:
+            if is_color_available(cards_on_the_table[0][0].color):
+                if cards_on_the_table[0][0].color == cards_on_the_table[1][0].color:
+                    if cards_on_the_table[0][0].bigger_than(cards_on_the_table[1][0]):
+                        if has_bigger_card(cards_on_the_table[0][0], hand):
+                            if card_to_be_played.bigger_than(cards_on_the_table[0][0]) and card_to_be_played.color == cards_on_the_table[0][0].color:
+                                return True
+                            else:
+                                return False
+                        else:
+                            if card_to_be_played.color == cards_on_the_table[0][0].color:
+                                return True
+                            else:
+                                return False
+                    elif cards_on_the_table[1][0].bigger_than(cards_on_the_table[0][0]):
+                        if has_bigger_card(cards_on_the_table[1][0], hand):
+                            if card_to_be_played.bigger_than(cards_on_the_table[1][0]) and card_to_be_played.color == cards_on_the_table[1][0].color:
+                                return True
+                            else:
+                                return False
+                        else:
+                            if card_to_be_played.color == cards_on_the_table[1][0].color:
+                                return True
+                            else:
+                                return False
+                else:
+                    if has_bigger_card(cards_on_the_table[0][0], hand):
+                        if card_to_be_played.bigger_than(cards_on_the_table[0][0]) and card_to_be_played.color == \
+                                cards_on_the_table[0][0].color:
+                            return True
+                        else:
+                            return False
+                    else:
+                        if card_to_be_played.color == cards_on_the_table[0][0].color:
+                            return True
+                        else:
+                            return False
+            else:
+                return True
+
+
+
 
 
 class Passz(Szines):
@@ -426,6 +504,9 @@ class Passz(Szines):
         self.csendes_szaz_lehet = True
         self.csendes_ulti_lehet = True
         self.csendes_duri_lehet = True
+        self.csendes_szaz = False
+        self.csendes_ulti = False
+        self.csendes_duri = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -434,8 +515,19 @@ class Passz(Szines):
         self.adu = adu
 
     def evaluate(self):
+        vedo_points, vallalo_points = self.evaluate_passz(self.points)
+        self.evaluate_csendes_szaz(vedo_points, vallalo_points, 2)
+        self.evaluate_csendes_ulti()
+        self.evaluate_csendes_duri(3)
+
+    def evaluate_passz(self, points):
         print("pass evaluate started")
         print("player discards:")
+        self.vedok = [0,1,2]
+        self.vedok.remove(self.vallalo)
+        print("vedok", self.vedok)
+        print("vallalo", self.vallalo)
+
         for p in self.players:
             print(p.discard)
 
@@ -454,7 +546,7 @@ class Passz(Szines):
 
         for g in self.jatekok.keys():
             highest_kontra = 0
-            for key, value in self.kontra[g]:
+            for key, value in self.kontra[g].items():
                 if True in value:
                     highest_kontra = key
             self.jatekok[g][1] = highest_kontra
@@ -472,49 +564,78 @@ class Passz(Szines):
             self.jatekok["Passz"][0] = True
             print("vallalo nyert: ", self.vallalo, vallalo_points)
             print("védő pontok:", vedo_points)
-            if vallalo_points < 100:
-                self.players[self.vallalo].points += self.points * 2 * 2 ** self.jatekok["Passz"][1]
-                for p in self.players:
-                    if self.players.index(p) != self.vallalo:
-                        p.points -= self.points * 2 ** self.jatekok["Passz"][1]
-            else:
-                print("csendes száz")
-                self.players[self.vallalo].points += self.points * 2 * 2 ** self.jatekok["Passz"][1] *2
-                for p in self.players:
-                    if self.players.index(p) != self.vallalo:
-                        p.points -= self.points * 2 ** self.jatekok["Passz"][1] * 2
+            self.players[self.vallalo].points += self.points * 2 * (2 ** self.jatekok["Passz"][1])
+            for p in self.players:
+                if self.players.index(p) != self.vallalo:
+                    p.points -= self.points * (2 ** self.jatekok["Passz"][1])
         else:
             print("vedok nyertek, védő pontok: ", vedo_points)
             print("vállaló pontok: ", vallalo_points)
-            if vedo_points < 100:
-                self.players[self.vallalo].points -= self.points * 2 * 2 ** self.jatekok["Passz"][1]
-                for p in self.players:
-                    if self.players.index(p) != self.vallalo:
-                        p.points += self.points * 2 ** self.jatekok["Passz"][1]
-            else:
-                print("csendes száz")
-                self.players[self.vallalo].points -= self.points * 2 * 2 ** self.jatekok["Passz"][1] * 2
-                for p in self.players:
-                    if self.players.index(p) != self.vallalo:
-                        p.points += self.points * 2 ** self.jatekok["Passz"][1] * 2
+            self.players[self.vallalo].points -= self.points * 2 * (2 ** self.jatekok["Passz"][1])
+            for p in self.players:
+                if self.players.index(p) != self.vallalo:
+                    p.points += self.points * (2 ** self.jatekok["Passz"][1])
 
+        return vedo_points, vallalo_points
+
+    # csendes duri
+    def evaluate_csendes_duri(self, points):
         if len(self.players[self.vedok[0]].discard) == 0 and len(self.players[self.vedok[1]].discard) == 0:
             print("csendes duri")
-            self.players[self.vallalo].points += 6
-            self.players[self.vedok[0]].points -= 3
-            self.players[self.vedok[1]].points -= 3
+            self.players[self.vallalo].points += points * 2
+            self.players[self.vedok[0]].points -= points
+            self.players[self.vedok[1]].points -= points
+            self.csendes_duri = True
+
+    # csendes ulti
+    def evaluate_csendes_ulti(self, points):
         colors = {
             "zold": "Zöld",
             "makk": "Makk",
             "tok": "Tök",
             "piros": "Piros"
-        }
+            }
+        if self.adu + " hetes" in self.players[last_round_won].discard[-1]:
+            for card in self.players[last_round_won].discard[-1]:
+                if card[0] == self.adu + " hetes":
+                    if last_round_won == card[1]:
+                        #sikerült a csendes ulti
+                        print("sikerült a csendes ulti")
+                        self.players[last_round_won].points += points * 2
+                        for i in range(len(3)):
+                            if i == last_round_won:
+                                continue
+                            else:
+                                self.players[i].points -= points
+                    else:
+                        #bukott a csendes ulti
+                        print("bukott a csendes ulti")
+                        self.players[last_round_won].points -= points * 2 * 2
+                        for i in range(len(3)):
+                            if i == last_round_won:
+                                continue
+                            else:
+                                self.players[i].points += points *2
 
-        if colors[self.adu] + " hetes" in self.players[self.vallalo].discard[-1] and last_round_won == self.vallalo:
-            print("csendes ulti")
-            self.players[self.vallalo].points += 4
-            self.players[self.vedok[0]].points -= 2
-            self.players[self.vedok[1]].points -= 2
+
+
+    def evaluate_csendes_szaz(self, vedo_points, vallalo_points, points):
+        if vallalo_points > 100:
+            print("vállaló csendes száz")
+            self.csendes_szaz = True
+            self.players[self.vallalo].points += 2* points
+            for n in self.vedok:
+                self.players[n].points -= points
+
+
+        elif vedo_points > 100:
+            print("védő csendes száz")
+            self.csendes_szaz = True
+            self.players[self.vallalo].points -= 2* points
+            for n in self.vedok:
+                self.players[n].points += points
+
+
 
 
 class PirosPassz(Passz):
@@ -523,7 +644,14 @@ class PirosPassz(Passz):
         self.adu = 'piros'
         self.points = 2
         self.name = "Passz"
+        for j in self.jatekok.keys():
+            self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
+    def evaluate(self):
+        vedo_points, vallalo_points = Passz.evaluate_passz(2)
+        Passz.evaluate_csendes_szaz(vedo_points, vallalo_points, 4)
+        Passz.evaluate_csendes_ulti(4)
+        Passz.evaluate_csendes_duri(6)
 
 class NegyvenSzaz(Szines):
     def __init__(self, players):
@@ -537,76 +665,484 @@ class NegyvenSzaz(Szines):
         self.jatek_lista = ["Negyven-száz"]
         self.csendes_ulti_lehet = True
         self.csendes_duri_lehet = True
+        self.csendes_ulti = False
+        self.csendes_duri = False
         self.has_40_at_start = False
+        for j in self.jatekok.keys():
+            self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
-    def check_for_40(self):
+    def evaluate(self):
+        self.evaluate_negyven_szaz(4)
+        Passz.evaluate_csendes_ulti(2)
+        Passz.evaluate_csendes_duri(3)
+
+    def evaluate_negyven_szaz(self, points):
         colors = {
             "zold": "Zöld",
             "makk": "Makk",
             "tok": "Tök",
             "piros": "Piros"
         }
-        if colors[self.adu] + " felső" in self.players[self.vallalo].hand and colors[self.adu] + " király" in self.players[self.vallalo].hand:
-            self.has_40_at_start = True
+        #getting highest kontra
+        for g in self.jatekok.keys():
+            highest_kontra = 0
+            for key, value in self.kontra[g].items():
+                if True in value:
+                    highest_kontra = key
+            self.jatekok[g][1] = highest_kontra
 
-    def evaluate(self):
-        pass
+        felso = False
+        kiraly = False
+        for p in self.players:
+            for thisround in p.discard:
+                for card in thisround:
+
+                    if colors[self.adu] + " felső" == card[0] and card[1] == self.vallalo:
+                        felso = True
+                    if colors[self.adu] + " király" == card[0] and card[1] == self.vallalo:
+                        kiraly = True
+
+        vallalo_points = self.player_points[self.vallalo]
+        if felso and kiraly:
+            vallalo_points += 40
+
+        for thisround in self.players[self.vallalo].discard:
+            for card in thisround:
+                if card[0].value in ["tizes", "asz"]:
+                    vallalo_points += 10
+
+        if felso and kiraly and vallalo_points > 100:
+            # negyven-száz nyerve
+            self.jatekok["Negyven-száz"][0] = True
+            self.players[self.vallalo].points += points * 2 * (2 ** self.jatekok["Negyven-száz"][1])
+            for i in self.vedok:
+                self.players[i].points -= points * (2 ** self.jatekok["Negyven-száz"][1])
+
+        else:
+            self.jatekok["Negyven-száz"][0] = True
+            self.players[self.vallalo].points -= points * 2 * (2 ** self.jatekok["Negyven-száz"][1])
+            for i in self.vedok:
+                self.players[i].points += points * (2 ** self.jatekok["Negyven-száz"][1])
+
+
+
 
 
 class Ulti(Szines):
-    pass
+    def __init__(self, players):
+        super().__init__(players)
+        self.adu = None
+        self.points = 4
+        self.can_be_lost = False
+        self.vanHuszNegyven = True
+        self.name = "Ulti"
+        self.jatekok = {"Passz": [False, 0],
+                        "Ulti": [False, 0]
+                        }
+        self.jatek_lista = ["Passz, Ulti"]
+        self.csendes_szaz_lehet = True
+        self.csendes_duri_lehet = True
+        self.csendes_szaz = False
+        self.csendes_duri = False
+        for j in self.jatekok.keys():
+            self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
+
+
+    def evaluate(self):
+        vedo_points, vallalo_points = Passz.evaluate_passz(1)
+        self.evaluate_ulti(4)
+        Passz.evaluate_csendes_szaz(vedo_points, vallalo_points, 2)
+        Passz.evaluate_csendes_duri(3)
+
+    def evaluate_ulti(self, points):
+        colors = {
+            "zold": "Zöld",
+            "makk": "Makk",
+            "tok": "Tök",
+            "piros": "Piros"
+        }
+
+
+        for g in self.jatekok.keys():
+            highest_kontra = 0
+            for key, value in self.kontra[g].items():
+                if True in value:
+                    highest_kontra = key
+            self.jatekok[g][1] = highest_kontra
+
+
+        for card in self.players[self.vallalo].discard[-1]:
+            if card[0] == colors[self.adu] + " hetes":
+                self.jatekok["ulti"][0] = True
+
+        if self.jatekok["ulti"][0] == True:
+            # sikerült az ulti
+            self.players[self.vallalo].points += points * 2 * (2 ** self.jatekok["Ulti"][1])
+            for i in self.vedok:
+                self.players[i].points -= points * (2 ** self.jatekok["Ulti"][1])
+        else:
+            self.players[self.vallalo].points -= points * 2 * (2 ** self.jatekok["Ulti"][1])
+            for i in self.vedok:
+                self.players[i].points += points * (2 ** self.jatekok["Ulti"][1])
 
 
 class Betli(Szintelen):
-    pass
+    def __init__(self, players):
+        super().__init__(players)
+        self.adu = None
+        self.points = 5
+        self.can_be_lost = True
+        self.vanHuszNegyven = False
+        self.name = "Ulti"
+        self.jatekok = {"Betli": [False, 0]
+                        }
+        self.jatek_lista = ["Betli"]
+        self.csendes_szaz_lehet = False
+        self.csendes_duri_lehet = False
+        for j in self.jatekok.keys():
+            self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
+    def evaluate(self):
+        self.evaluate_betli(5)
+
+
+    def evaluate_betli(self, points):
+
+        for g in self.jatekok.keys():
+            highest_kontra = 0
+            for key, value in self.kontra[g].items():
+                if True in value:
+                    highest_kontra = key
+            self.jatekok[g][1] = highest_kontra
+
+        if len(self.players[self.vallalo].discard) == 0:
+            self.jatekok["Betli"][0] = True
+            self.players[self.vallalo].points += points * 2 * (2 ** self.jatekok["Betli"][1])
+            for i in self.vedok:
+                self.players[i].points -= points * (2 ** self.jatekok["Betli"][1])
+        else:
+            self.players[self.vallalo].points -= points * 2 * (2 ** self.jatekok["Betli"][1])
+            for i in self.vedok:
+                self.players[i].points += points * (2 ** self.jatekok["Betli"][1])
+
+    def is_game_lost(self):
+        if len(self.players[self.vallalo].discard) == 0:
+            return False
+        else:
+            return True
 
 class Durchmarsch(Szines):
-    pass
+    def __init__(self, players):
+        super().__init__(players)
+        self.adu = None
+        self.points = 6
+        self.can_be_lost = True
+        self.vanHuszNegyven = False
+        self.bemondtak = []
+        self.name = "Durchmarsch"
+        self.jatekok = {"Durchmarsch": [False, 0]}
+        self.jatek_lista = ["Durchmarsch"]
+        self.csendes_szaz_lehet = False
+        self.csendes_ulti_lehet = True
+        self.csendes_duri_lehet = False
+        self.csendes_ulti = False
+        for j in self.jatekok.keys():
+            self.kontra.update({j: copy.deepcopy(self.kontra_alap)})
 
+    def evaluate(self):
+        self.evaluate_durchmarsch(6)
+        Passz.evaluate_csendes_ulti(2)
+
+    def evaluate_durchmarsch(self, points):
+
+        for g in self.jatekok.keys():
+            highest_kontra = 0
+            for key, value in self.kontra[g].items():
+                if True in value:
+                    highest_kontra = key
+            self.jatekok[g][1] = highest_kontra
+
+        lost = False
+        for i in self.vedok:
+            if len(self.players[i].discard) != 0:
+                lost = True
+
+        if not lost:
+            self.jatekok["Durchmarsch"][0] = True
+            self.players[self.vallalo].points += points * 2 * (2 ** self.jatekok["Durchmarsch"][1])
+            for i in self.vedok:
+                self.players[i].points -= points * (2 ** self.jatekok["Durchmarsch"][1])
+        else:
+            self.players[self.vallalo].points -= points * 2 * (2 ** self.jatekok["Durchmarsch"][1])
+            for i in self.vedok:
+                self.players[i].points += points * (2 ** self.jatekok["Durchmarsch"][1])
+
+
+
+    def is_game_lost(self):
+        lost = False
+        for i in self.vedok:
+            if len(self.players[i].discard) != 0:
+                lost = True
+        return lost
 
 class SzintelenDurchmarsch(Szintelen):
-    pass
+    def __init__(self, players):
+        super().__init__(players)
+        self.adu = None
+        self.points = 6
+        self.can_be_lost = True
+        self.vanHuszNegyven = False
+        self.bemondtak = []
+        self.name = "Durchmarsch"
+        self.jatekok = {"Durchmarsch": [False, 0]}
+        self.jatek_lista = ["Durchmarsch"]
+        self.csendes_szaz_lehet = False
+        self.csendes_ulti_lehet = False
+        self.csendes_duri_lehet = False
+        self.csendes_ulti = False
+        for j in self.jatekok.keys():
+            self.kontra.update({j: copy.deepcopy(self.kontra_alap)})
+
+    def evaluate(self):
+        self.evaluate_durchmarsch(6)
+
+    def evaluate_durchmarsch(self, points):
+
+        for g in self.jatekok.keys():
+            highest_kontra = 0
+            for key, value in self.kontra[g].items():
+                if True in value:
+                    highest_kontra = key
+            self.jatekok[g][1] = highest_kontra
+
+        lost = False
+        for i in self.vedok:
+            if len(self.players[i].discard) != 0:
+                lost = True
+
+        if not lost:
+            self.jatekok["Durchmarsch"][0] = True
+            self.players[self.vallalo].points += points * 2 * (2 ** self.jatekok["Durchmarsch"][1])
+            for i in self.vedok:
+                self.players[i].points -= points * (2 ** self.jatekok["Durchmarsch"][1])
+        else:
+            self.players[self.vallalo].points -= points * 2 * (2 ** self.jatekok["Durchmarsch"][1])
+            for i in self.vedok:
+                self.players[i].points += points * (2 ** self.jatekok["Durchmarsch"][1])
+
+    def is_game_lost(self):
+        lost = False
+        for i in self.vedok:
+            if len(self.players[i].discard) != 0:
+                lost = True
+        return lost
 
 
 class NegyvenSzazUlti(Szines):
-    pass
+    def __init__(self, players):
+        super().__init__(players)
+        self.adu = None
+        self.points = 4
+        self.can_be_lost = False
+        self.vanHuszNegyven = False
+        self.name = "Negyven-száz ulti"
+        self.jatekok = {"Negyven-száz": [False, 0],
+                        "Ulti": [False, 0]
+                        }
+        self.jatek_lista = ["Negyven-száz", "Ulti"]
+        self.csendes_ulti_lehet = False
+        self.csendes_duri_lehet = True
+        self.csendes_ulti = False
+        self.csendes_duri = False
+        self.has_40_at_start = False
+        for j in self.jatekok.keys():
+            self.kontra.update({j: copy.deepcopy(self.kontra_alap)})
+
+    def evaluate(self):
+        NegyvenSzaz.evaluate_negyven_szaz(4)
+        Ulti.evaluate_ulti(4)
+        Passz.evaluate_csendes_duri(3)
 
 
-class PirosNegyvenSzaz(Szines):
-    pass
+class PirosNegyvenSzaz(NegyvenSzaz):
+    def __init__(self, players):
+        super().__init__(players)
+        self.adu = 'piros'
 
+
+    def evaluate(self):
+        NegyvenSzaz.evaluate_negyven_szaz(8)
+        Passz.evaluate_csendes_ulti(4)
+        Passz.evaluate_csendes_duri(6)
 
 class HuszSzaz(Szines):
-    pass
+    def __init__(self, players):
+        super().__init__(players)
+        self.adu = None
+        self.points = 8
+        self.can_be_lost = False
+        self.vanHuszNegyven = False
+        self.name = "Húsz-száz"
+        self.jatekok = {"Húsz-száz": [False, 0]}
+        self.jatek_lista = ["Húsz-száz"]
+        self.csendes_ulti_lehet = True
+        self.csendes_duri_lehet = True
+        self.csendes_ulti = False
+        self.csendes_duri = False
+        self.has_40_at_start = False
+        for j in self.jatekok.keys():
+            self.kontra.update({j: copy.deepcopy(self.kontra_alap)})
+
+    def evaluate(self):
+        self.evaluate_husz_szaz(8)
+        Passz.evaluate_csendes_ulti(2)
+        Passz.evaluate_csendes_duri(3)
+
+    def evaluate_husz_szaz(self, points):
+
+        for g in self.jatekok.keys():
+            highest_kontra = 0
+            for key, value in self.kontra[g].items():
+                if True in value:
+                    highest_kontra = key
+            self.jatekok[g][1] = highest_kontra
+
+        colors = {
+            "zold": "Zöld",
+            "makk": "Makk",
+            "tok": "Tök",
+            "piros": "Piros"
+        }
+        husz = False
+        for key, value in colors.items():
+            if key == self.adu:
+                continue
+            felso, kiraly = False, False
+            for i in range(3):
+                for thisround in self.players[i].discard:
+                    for card in thisround:
+                        if card[0] == colors[key] + " felső" and card[1] == self.vallalo:
+                            felso = True
+                        if card[0] == colors[key] + " király" and card[1] == self.vallalo:
+                            kiraly = True
+            if felso and kiraly:
+                husz = True
+
+        vallalo_points = self.player_points[self.vallalo]
+        if husz:
+            vallalo_points += 20
 
 
-class PirosUlti(Szines):
-    pass
+        for thisround in self.players[self.vallalo].discard:
+            for card in thisround:
+                if card[0].value in ["tizes", "asz"]:
+                    vallalo_points += 10
+
+        if husz and vallalo_points > 100:
+            # húsz-száz nyerve
+            self.jatekok["Húsz-száz"][0] = True
+            self.players[self.vallalo].points += points * 2 * (2 ** self.jatekok["Húsz-száz"][1])
+            for i in self.vedok:
+                self.players[i].points -= points * (2 ** self.jatekok["Húsz-száz"][1])
+
+        else:
+            self.jatekok["Húsz-száz"][0] = True
+            self.players[self.vallalo].points -= points * 2 * (2 ** self.jatekok["Húsz-száz"][1])
+            for i in self.vedok:
+                self.players[i].points += points * (2 ** self.jatekok["Húsz-száz"][1])
+        self.player_points[self.vallalo] += 20
 
 
-class NegyvenSzazDurchmarsch(Szines):
-    pass
+class PirosUlti(Ulti):
+    def __init__(self, players):
+        super().__init__(players)
+        self.adu = 'piros'
 
 
-class UltiDurchmarsch(Szines):
-    pass
+    def evaluate(self):
+        vedo_points, vallalo_points = Passz.evaluate_passz(2)
+        Ulti.evaluate_ulti(8)
+        Passz.evaluate_csendes_szaz(vedo_points, vallalo_points, 4)
+        Passz.evaluate_csendes_duri(6)
 
 
-class Rebetli(Szintelen):
-    pass
+class NegyvenSzazDurchmarsch(NegyvenSzaz):
+    def __init__(self, players):
+        super().__init__(players)
+        self.csendes_duri_lehet = False
+        self.name = "Negyven-száz durchmarsch"
+        self.jatekok = {"Negyven-száz": [False, 0],
+                        "Durchmarsch": [False, 0]}
+        self.jatek_lista = ["Negyven-száz", "Durchmarsch"]
+
+    def evaluate(self):
+        NegyvenSzaz.evaluate_negyven_szaz(4)
+        Durchmarsch.evaluate_durchmarsch(6)
+        Passz.evaluate_csendes_ulti(2)
+
+class UltiDurchmarsch(Ulti):
+    def __init__(self, players):
+        super().__init__(players)
+        self.csendes_duri_lehet = False
+        self.name = "Ulti durchmarsch"
+        self.jatekok = {"Ulti": [False, 0],
+                        "Durchmarsch": [False, 0]}
+        self.jatek_lista = ["Ulti", "Durchmarsch"]
+
+    def evaluate(self):
+        Ulti.evaluate_ulti(4)
+        Durchmarsch.evaluate_durchmarsch(6)
 
 
-class HuszSzazUlti(Szines):
-    pass
+class Rebetli(Betli):
+    def __init__(self, players):
+        super().__init__(players)
+        self.name = "Rebetli"
+        self.jatekok = {"Rebetli": [False, 0]}
+        self.jatek_lista = ["Rebetli"]
+
+    def evaluate(self):
+        Betli.evaluate_betli(10)
 
 
-class ReDurchmarsch(Szintelen):
-    pass
+class HuszSzazUlti(Ulti):
+    def __init__(self, players):
+        super().__init__(players)
+        self.csendes_szaz_lehet = False
+        self.name = "Húsz-száz ulti"
+        self.jatekok = {"Húsz-száz": [False, 0],
+                        "Ulti": [False, 0]}
+        self.jatek_lista = ["Húsz-száz", "Ulti"]
+
+    def evaluate(self):
+        Ulti.evaluate_ulti(4)
+        HuszSzaz.evaluate_husz_szaz(8)
+        Passz.evaluate_csendes_duri(3)
 
 
-class PirosDurschmarsch(Szines):
-    pass
+class ReDurchmarsch(SzintelenDurchmarsch):
+    def __init__(self, players):
+        super().__init__(players)
+        self.name = "Redurchmarsch"
+        self.jatekok = {"Redurchmarsch": [False, 0]}
+        self.jatek_lista = ["Redurchmarsch"]
+
+    def evaluate(self):
+        SzintelenDurchmarsch.evaluate_durchmarsch(12)
+
+
+class PirosDurschmarsch(Durchmarsch):
+    def __init__(self, players):
+        super().__init__(players)
+        self.adu = 'piros'
+        self.name = "Durchmarsch"
+        self.jatekok = {"Durchmarsch": [False, 0]}
+        self.jatek_lista = ["Durchmarsch"]
+
+    def evaluate(self):
+        Durchmarsch.evaluate_durchmarsch(12)
+        Passz.evaluate_csendes_ulti(8)
 
 
 class NegyvenSzazUltiDurchmarsch(Szines):

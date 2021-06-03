@@ -52,7 +52,7 @@ def threaded_client(conn, p, game):
 
     while True:
         try:
-            data = conn.recv(4096 * 16)
+            data = conn.recv(4096 * 32)
             try:
                 data = data.decode()
 
@@ -100,8 +100,11 @@ def threaded_client(conn, p, game):
                             game.getHuszNegyven(game.selected_game.adu)
                         elif data.split(":")[0] == "kontra":
                             game.kontra(data.split(":")[1])
+                        elif data == "reset":
+                            game.display_results()
                         if game.game_phase in [STARTED, INIT] and len(game.players) == 3:
                             game.initialize()
+
 
                         conn.sendall(pickle.dumps(game))
                     except:
