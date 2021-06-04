@@ -27,47 +27,47 @@ class Game(object):
         self.last_round_won = None
         self.possible_games = {
             'No Game' : [0],
-            'Passz' : [1, Passz(self.players)],
-            'Piros passz' : [2, PirosPassz(self.players)],
-            'Negyven-száz' : [3, NegyvenSzaz(self.players)],
-            'Ulti' : [4, Ulti(self.players)],
-            'Betli' : [5, Betli(self.players)],
-            'Durchmarsch' : [6, Durchmarsch(self.players)],
-            'Színtelen durchmarsch' : [6, SzintelenDurchmarsch(self.players)],
-            'Negyven-száz Ulti' : [7, NegyvenSzazUlti(self.players)],
-            'Piros negyven-száz' : [8, PirosNegyvenSzaz(self.players)],
-            'Húsz-száz' : [9, HuszSzaz(self.players)],
-            'Piros ulti' : [10, PirosUlti(self.players)],
-            'Negyven-száz durchmarsch' : [11, NegyvenSzazDurchmarsch(self.players)],
-            'Ulti durchmarsch' : [11, UltiDurchmarsch(self.players)],
-            'Rebetli' : [12, Rebetli(self.players)],
-            'Húsz-száz ulti' : [13, HuszSzazUlti(self.players)],
-            'Redurchmarsch' : [14, ReDurchmarsch(self.players)],
-            'Piros durchmarsch' : [14, PirosDurschmarsch(self.players)],
-            'Negyven-száz ulti durschmarsch' : [15, NegyvenSzazUltiDurchmarsch(self.players)],
-            'Húsz-száz durchmarsch' : [16, HuszSzazDurchmarsch(self.players)],
-            'Piros negyven-száz ulti' : [17, PirosNegyvenSzazUlti(self.players)],
-            'Piros húsz-száz' : [18, PirosHuszSzaz(self.players)],
-            'Húsz-száz ulti durchmarsch' : [19, HuszSzazUltiDurchmarsch(self.players)],
-            'Piros negyven-száz durchmarsch' : [20, PirosNegyvenSzazDurchmarsch(self.players)],
-            'Piros ulti durchmarsch' : [20, PirosUltiDurchmarsch(self.players)],
-            'Terített betli' : [21, TeritettBetli(self.players)],
-            'Piros húsz-száz ulti' : [22, PirosHuszSzazUlti(self.players)],
-            'Terített durchmarsch' : [23, TeritettDurchmarsch(self.players)],
-            'Színtelen terített durchmarsch' : [23, SzintelenTeritettDurchmarsch(self.players)],
-            'Piros negyven-száz ulti durchmarsch' : [24, PirosNegyvenSzazUltiDurchmarsch(self.players)],
-            'Piros húsz-száz durchmarsch' : [25, PirosHuszSzazDurchmarsch(self.players)],
-            'Terített negyven-száz durchmarsch' : [26, TeritettNegyvenSzazDurchmarsch(self.players)],
-            'Terített ulti durchmarsch' : [26, TeritettUltiDurchMarsch(self.players)],
-            'Terített negyven-száz ulti durchmarsch' : [27, TeritettNegyvenSzazUltiDurchmarsch(self.players)],
-            'Terített piros negyven-száz durchmarsch' : [28, TeritettPirosNegyvenSzazDurchmarsch(self.players)],
-            'Terített piros ulti durchmarsch' : [28, PirosTeritettNegyvenSzazUltiDurchmarsch(self.players)],
-            'Terített húsz-száz durchmarsch' : [28, TeritettHuszSzazDurchmarsch(self.players)],
-            'Piros ulti durchmarsch húsz-száz' : [29, PirosUltiDurchmarschHuszSzaz(self.players)],
-            'Terített ulti durchmarsch húsz-száz' : [29, TeritettUltiDurchmarschHuszSzaz(self.players)],
-            'Piros terített negyven-száz ulti durchmarsch' : [30, PirosTeritettNegyvenSzazUltiDurchmarsch(self.players)],
-            'Piros terített durchmarsch húsz-száz' : [31, PirosTeritettDurchmarschHuszSzaz(self.players)],
-            'Piros terített ulti durchmarsch húsz-száz' : [32, PirosTeritettUltiDurchmarschHuszSzaz(self.players)]
+            'Passz' : [1, Passz(self.players, self.last_round_won)],
+            'Piros passz' : [2, PirosPassz(self.players, self.last_round_won)],
+            'Negyven-száz' : [3, NegyvenSzaz(self.players, self.last_round_won)],
+            'Ulti' : [4, Ulti(self.players, self.last_round_won)],
+            'Betli' : [5, Betli(self.players, self.last_round_won)],
+            'Durchmarsch' : [6, Durchmarsch(self.players, self.last_round_won)],
+            'Színtelen durchmarsch' : [6, SzintelenDurchmarsch(self.players, self.last_round_won)],
+            'Negyven-száz Ulti' : [7, NegyvenSzazUlti(self.players, self.last_round_won)],
+            'Piros negyven-száz' : [8, PirosNegyvenSzaz(self.players, self.last_round_won)],
+            'Húsz-száz' : [9, HuszSzaz(self.players, self.last_round_won)],
+            'Piros ulti' : [10, PirosUlti(self.players, self.last_round_won)],
+            'Negyven-száz durchmarsch' : [11, NegyvenSzazDurchmarsch(self.players, self.last_round_won)],
+            'Ulti durchmarsch' : [11, UltiDurchmarsch(self.players, self.last_round_won)],
+            'Rebetli' : [12, Rebetli(self.players, self.last_round_won)],
+            'Húsz-száz ulti' : [13, HuszSzazUlti(self.players, self.last_round_won)],
+            'Redurchmarsch' : [14, ReDurchmarsch(self.players, self.last_round_won)],
+            'Piros durchmarsch' : [14, PirosDurschmarsch(self.players, self.last_round_won)],
+            'Negyven-száz ulti durschmarsch' : [15, NegyvenSzazUltiDurchmarsch(self.players, self.last_round_won)],
+            'Húsz-száz durchmarsch' : [16, HuszSzazDurchmarsch(self.players, self.last_round_won)],
+            'Piros negyven-száz ulti' : [17, PirosNegyvenSzazUlti(self.players, self.last_round_won)],
+            'Piros húsz-száz' : [18, PirosHuszSzaz(self.players, self.last_round_won)],
+            'Húsz-száz ulti durchmarsch' : [19, HuszSzazUltiDurchmarsch(self.players, self.last_round_won)],
+            'Piros negyven-száz durchmarsch' : [20, PirosNegyvenSzazDurchmarsch(self.players, self.last_round_won)],
+            'Piros ulti durchmarsch' : [20, PirosUltiDurchmarsch(self.players, self.last_round_won)],
+            'Terített betli' : [21, TeritettBetli(self.players, self.last_round_won)],
+            'Piros húsz-száz ulti' : [22, PirosHuszSzazUlti(self.players, self.last_round_won)],
+            'Terített durchmarsch' : [23, TeritettDurchmarsch(self.players, self.last_round_won)],
+            'Színtelen terített durchmarsch' : [23, SzintelenTeritettDurchmarsch(self.players, self.last_round_won)],
+            'Piros negyven-száz ulti durchmarsch' : [24, PirosNegyvenSzazUltiDurchmarsch(self.players, self.last_round_won)],
+            'Piros húsz-száz durchmarsch' : [25, PirosHuszSzazDurchmarsch(self.players, self.last_round_won)],
+            'Terített negyven-száz durchmarsch' : [26, TeritettNegyvenSzazDurchmarsch(self.players, self.last_round_won)],
+            'Terített ulti durchmarsch' : [26, TeritettUltiDurchMarsch(self.players, self.last_round_won)],
+            'Terített negyven-száz ulti durchmarsch' : [27, TeritettNegyvenSzazUltiDurchmarsch(self.players, self.last_round_won)],
+            'Terített piros negyven-száz durchmarsch' : [28, TeritettPirosNegyvenSzazDurchmarsch(self.players, self.last_round_won)],
+            'Terített piros ulti durchmarsch' : [28, PirosTeritettNegyvenSzazUltiDurchmarsch(self.players, self.last_round_won)],
+            'Terített húsz-száz durchmarsch' : [28, TeritettHuszSzazDurchmarsch(self.players, self.last_round_won)],
+            'Piros ulti durchmarsch húsz-száz' : [29, PirosUltiDurchmarschHuszSzaz(self.players, self.last_round_won)],
+            'Terített ulti durchmarsch húsz-száz' : [29, TeritettUltiDurchmarschHuszSzaz(self.players, self.last_round_won)],
+            'Piros terített negyven-száz ulti durchmarsch' : [30, PirosTeritettNegyvenSzazUltiDurchmarsch(self.players, self.last_round_won)],
+            'Piros terített durchmarsch húsz-száz' : [31, PirosTeritettDurchmarschHuszSzaz(self.players, self.last_round_won)],
+            'Piros terített ulti durchmarsch húsz-száz' : [32, PirosTeritettUltiDurchmarschHuszSzaz(self.players, self.last_round_won)]
         }
 
     def new_popup(self, msg):
@@ -108,6 +108,7 @@ class Game(object):
                 if self.players[i].is_dealer == True:
                     self.players[i].is_dealer = False
                     self.players[i-1].is_dealer = True
+                    break
 
         self.deal_hands()
         for p in self.players:
@@ -116,6 +117,8 @@ class Game(object):
 
     def deal_hands(self):
         print("in deal-hands")
+        for p in self.players:
+            p.is_active = False
         if self.players[0].is_dealer:
             print("p0 is dealer")
             self.players[2].set_hand(self.deck.cards[0:12])
@@ -143,11 +146,12 @@ class Game(object):
             self.players[2].set_hand(self.deck.cards[12:22])
             self.players[0].set_hand(self.deck.cards[22:32])
         print("deal_hands done")
-        active_counter = 0
-        for p in self.players:
-            if p.is_active:
-                active_counter += 1
-        assert active_counter == 1, "active players amount bad after deal hands"
+        # active_counter = 0
+        # for p in self.players:
+        #     if p.is_active:
+        #         active_counter += 1
+        # assert active_counter == 1, "active players amount bad after deal hands"
+
 
     def accept_bid(self):
         print("accept bid started")
@@ -349,23 +353,28 @@ class Game(object):
         # megnézi, ki vitte, berakja a discardjába
         # ha van adu: a legnagyobb adu nyer
         # ha nincs: a legnagyobb alapszín nyer
-
+        print("[*] collect_played_cards starting")
         for i in self.cards_on_the_table:
             for p in self.players:
                 if i[0] in p.hand:
                     p.hand.remove(i[0])
-
+        print("[*] collect_played_cards : removed palyed cards from hands")
         x = self.who_won_round()
         self.new_popup(self.players[x].name + " vitte")
         print(self.players[x].name + " has won this round")
         self.last_round_won = x
         self.players[x].discard.append(self.cards_on_the_table[:])
+        print("[*] collect_played_cards : played cards appeneded to winners discard")
         if self.selected_game.round == 10:
-
+            print("[*] - collect_played_cards : round 10 trigger")
             self.selected_game.player_points[x] += 10
+            print("[*] - collect_played_cards : line 1 done")
             self.game_phase = END
+            print("[*] - collect_played_cards : line 2 done")
             self.selected_game.evaluate()
+            print("[*] - collect_played_cards : line 3 done")
             self.display_results()
+            print("[*] - collect_played_cards : line 4 done")
 
         self.selected_game.round += 1
 
@@ -375,12 +384,17 @@ class Game(object):
         self.players[x].is_active = True
         self.cards_on_the_table.clear()
 
+        print("[*] collect_played_cards : resets done")
+
         self.remove_discards_from_hand()
 
-        print("dicards after collect_played_cards")
+
+
+        print("[*] collect_played_cards : dicards after collect_played_cards")
         for p in self.players:
             print(p.name, p.discard)
 
+        print("[*] collect_played_cards : last step done")
 
 
     def getHuszNegyven(self, adu):
@@ -448,7 +462,6 @@ class Game(object):
         self.vallalo = ""
         self.card_played = None
         self.cards_on_the_table.clear()
-        self.card_played.clear()
         self.selected_game = None
         self.current_game = 'No Game'
         self.new_popup("Új játék")

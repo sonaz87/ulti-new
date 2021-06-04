@@ -316,9 +316,9 @@ def redrawWindow(DISPLAYSURF, game, player):
                     playCardConfirmButton = pygame.draw.rect(DISPLAYSURF, GREY, playCardConfirmButtonRect)
                     DISPLAYSURF.blit(playCardConfirmButtonSurf, playCardConfirmButtonRect)
             except:
-                # print("error in play phase display")
-                # e = sys.exc_info()
-                # print(e)
+                print("error in play phase display")
+                e = sys.exc_info()
+                print(e)
                 pass
             # adu választás az első körben
             try:
@@ -424,31 +424,38 @@ def redrawWindow(DISPLAYSURF, game, player):
                 print(e)
                 pass
 
+            # terített játéknál a vállaló lapjai:
+            try:
+                if player != game.selected_game.vallalo and game.selected_game.round > 1:
+                    teritett_cards_to_display = []
+                    displacement = 150
+                    for card in game.players[game.selected_game.vallalo].hand:
+                        teritettCardSurf = card_images[card.color + card.value]
+                        teritettCardRect = teritettCardSurf.get_rect()
+                        teritettCardRect.topn = 100
+                        teritettCardRect.left = displacement
+                        DISPLAYSURF.blit(teritettCardSurf, teritettCardRect)
+                        displacement += 80
+
+            except:
+                print("error in displaying terített")
+                e = sys.exc_info()
+                print(e)
+                pass
 
         try:
             if len(game.cards_on_the_table) > 0:
                 mid_cards_to_dislpay = []
-                # print("mid cards display started")
                 for element in game.cards_on_the_table:
-                    # print("element: ", element)
-                    # print("element[0]", element[0])
                     middleCardSurf = card_images[element[0].color + element[0].value]
-                    # print("be")
                     middleCardRect = middleCardSurf.get_rect()
-                    # print("bi")
                     mid_cards_to_dislpay.append([[middleCardSurf, middleCardRect], element[1]])
-                    # print("ba")
-                # print("1")
-                # print(mid_cards_to_dislpay)
                 for i in mid_cards_to_dislpay:
                     if i[1] == 0:
-                        # print("2")
                         i[0][1].center = p0PlayedCardEndPos
                     elif i[1] == 1:
-                        # print("3")
                         i[0][1].center = p1PlayedCardEndPos
                     elif i[1] == 2:
-                        # print("4")
                         i[0][1].center = p2PlayedCardEndPos
                     DISPLAYSURF.blit(i[0][0], i[0][1])
         except:
@@ -463,11 +470,37 @@ def redrawWindow(DISPLAYSURF, game, player):
             resultRects = []
             displacement = 200
             for key, value in game.selected_game.jatekok.items():
-                resultSurfs.append(fontObj.render(game.selected_game.kontra[key][0][0] + " " +  key + " - " + ("Nyerve" if value[1] else "Bukva"), True, BLACK))
+                resultSurfs.append(fontObj.render(game.selected_game.kontra[key][0][0] + " " +  key + " - " + ("Nyerve" if value[0] else "Bukva"), True, BLACK))
                 resultRects.append(resultSurfs[-1].get_rect())
                 resultRects[-1].left = 300
                 resultRects[-1].top = displacement
                 DISPLAYSURF.blit(resultSurfs[-1], resultRects[-1])
+                displacement += 40
+            if hasattr(game.selected_game, 'csendes_szaz'):
+                if game.selected_game.csendes_szaz:
+                    csendesSzazSurf = fontObj.render("Csendes száz sikerült", True, Black)
+                    csendesSzazRect = csendesSzazSurf.get_rect()
+                    csendesSzazRect.left = 300
+                    csendesSzazRect.top = displacement
+                    DISPLAYSURF.blit(csendesSzazSurf, csendesSzazRect)
+                    displacement += 40
+            if hasattr(game.selected_game, 'csendes_ulti'):
+                if game.selected_game.csendes_ulti[0]:
+                    csendesUltiSurf = fontObj.render(game.players[game.selected_game.csendes_ulti[2]].name + " - Csendes ulti ", + ('sikerült' if game.selected_game.csendes_ulti[1] else 'bukva'), True, Black)
+                    csendesUltiRect = csendesSzazSurf.get_rect()
+                    csendesUltiRect.left = 300
+                    csendesUltiRect.top = displacement
+                    DISPLAYSURF.blit(csendesUltiSurf, csendesUltiRect)
+                    displacement += 40
+
+            if hasattr(game.selected_game, 'csendes_duri'):
+                if game.selected_game.csendes_duri:
+                    csendesDuriSurf = fontObj.render("Csendes durchmarsch sikerült", True, Black)
+                    csendesDuriRect = csendesDuriSurf.get_rect()
+                    csendesDuriRect.left = 300
+                    csendesDuriRect.top = displacement
+                    DISPLAYSURF.blit(csendesDuriSurf, csendesDuriRect)
+                    displacement += 40
 
             startOverSurf = fontObj.render("Új játék", True, WHITE)
             startOverRect = startOverSurf.get_rect()
@@ -710,7 +743,7 @@ def main():
                         game = n.send("reset")
             except:
                 pass
-
+        game = n.send("get")
         redrawWindow(DISPLAYSURF, game, player)
 
 server = "192.168.178.24"

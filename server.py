@@ -91,10 +91,6 @@ def threaded_client(conn, p, game):
                         elif data.split(":")[0] == "adu":
                             print("adu msg received")
                             game.selected_game.adu = data.split(":")[1]
-                            if hasattr(game.selected_game, 'has_40_at_start'):
-                                game.selected_game.check_for_40()
-                            if hasattr(game.selected_game, 'has_20_at_start'):
-                                game.selected_game.check_for_20()
 
                         elif data == "husznegyven":
                             game.getHuszNegyven(game.selected_game.adu)
