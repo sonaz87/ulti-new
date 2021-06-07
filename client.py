@@ -6,97 +6,6 @@ from pygame.locals import *
 
 
 
-# pygame inits:
-pygame.font.init()
-pygame.display.init()
-
-
-# message types:
-
-POPUP = 'popup'
-JOIN = 'join'
-DEAL_HAND = 'deal_hand'
-BID = 'bid'
-PLAY_CARD = 'play_card'
-INIT = 'init'
-SHOW_DSCARD = 'show_discard'
-SHOW_TALON = 'show_talon'
-BIDDING = 'bidding'
-GAME_PHASE = 'game_phase'
-SORTING = 'sorting'
-SZINES = "szines"
-SZINTELEN = 'szintelen'
-PLAY = 'play'
-END = 'end'
-
-# colors
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-GREY = (150, 150, 150)
-DARK_GREY = (50,50,50)
-LIGHT_GREY = (200, 200, 200)
-popup_text = 'Test'
-popup_msg = ''
-
-# fonts
-
-fontObj = pygame.font.Font('C:/Windows/Fonts/Calibri.ttf', 32)
-fontObj2 = pygame.font.Font('C:/Windows/Fonts/Calibri.ttf', 12)
-fontObj3 = pygame.font.Font('C:/Windows/Fonts/Calibri.ttf', 18)
-fontObjLicit = pygame.font.Font('C:/Windows/Fonts/Calibri.ttf', 18)
-fontObj3.set_bold(True)
-fontObjLicit.bold
-
-# test button
-
-textSurfaceObj = fontObj.render(popup_text, True, WHITE)
-textRectObj = textSurfaceObj.get_rect()
-textRectObj.center = (200, 150)
-
-# popup messages
-popupSurf1 = fontObj2.render('Placeholder1', True, WHITE)
-popupSurf2 = fontObj2.render('Placeholder2', True, WHITE)
-popupSurf3 = fontObj2.render('Placeholder3', True, WHITE)
-popupSurf4 = fontObj2.render('Placeholder4', True, WHITE)
-popupSurf5 = fontObj2.render('Placeholder5', True, WHITE)
-popupRectObj1 = popupSurf1.get_rect()
-popupRectObj2 = popupSurf1.get_rect()
-popupRectObj3 = popupSurf1.get_rect()
-popupRectObj4 = popupSurf1.get_rect()
-popupRectObj5 = popupSurf1.get_rect()
-popupRectObj1.center = (1300, 400)
-popupRectObj2.center = (1300, 420)
-popupRectObj3.center = (1300, 440)
-popupRectObj4.center = (1300, 460)
-popupRectObj5.center = (1300, 480)
-
-licitConfirmButtonSurf = fontObj.render('OK', True, WHITE)
-licitConfirmButtonRect = licitConfirmButtonSurf.get_rect()
-licitConfirmButtonRect.center = (700, 550)
-
-playCardConfirmButtonSurf = fontObj.render('OK', True, WHITE)
-playCardConfirmButtonRect = licitConfirmButtonSurf.get_rect()
-playCardConfirmButtonRect.center = (1050, 800)
-
-
-width, height = 1400, 900
-
-DISPLAYSURF = pygame.display.set_mode((1400, 900), 0, 32)
-pygame.display.set_caption('Ulti')
-table_img = pygame.image.load(r'D:/python projects/ulti/GUI/images/table.jpg')
-
-clientNumber = 0
-card_images = dict()
-
-deck = Deck()
-
-for card in deck.cards:
-    card_images.update({card.color + card.value: pygame.image.load(
-        'D:/python projects/ulti/GUI/images/' + card.color + card.value + '.jpg')})
 
 def getStartAndEndPos(game):
     pass
@@ -158,6 +67,74 @@ def redrawWindow(DISPLAYSURF, game, player):
     global kontraConfirms
     global cancelKontraButton
     global startOverButton
+
+    # colors
+
+    BLACK = (0, 0, 0)
+    WHITE = (255, 255, 255)
+    RED = (255, 0, 0)
+    GREEN = (0, 255, 0)
+    BLUE = (0, 0, 255)
+    GREY = (150, 150, 150)
+    DARK_GREY = (50, 50, 50)
+    LIGHT_GREY = (200, 200, 200)
+    popup_text = 'Test'
+    popup_msg = ''
+
+    # fonts
+
+    fontObj = pygame.font.Font('C:/Windows/Fonts/Calibri.ttf', 32)
+    fontObj2 = pygame.font.Font('C:/Windows/Fonts/Calibri.ttf', 12)
+    fontObj3 = pygame.font.Font('C:/Windows/Fonts/Calibri.ttf', 18)
+    fontObjLicit = pygame.font.Font('C:/Windows/Fonts/Calibri.ttf', 18)
+    fontObj3.set_bold(True)
+    fontObjLicit.bold
+
+    # test button
+
+    textSurfaceObj = fontObj.render(popup_text, True, WHITE)
+    textRectObj = textSurfaceObj.get_rect()
+    textRectObj.center = (200, 150)
+
+    # popup messages
+    popupSurf1 = fontObj2.render('Placeholder1', True, WHITE)
+    popupSurf2 = fontObj2.render('Placeholder2', True, WHITE)
+    popupSurf3 = fontObj2.render('Placeholder3', True, WHITE)
+    popupSurf4 = fontObj2.render('Placeholder4', True, WHITE)
+    popupSurf5 = fontObj2.render('Placeholder5', True, WHITE)
+    popupRectObj1 = popupSurf1.get_rect()
+    popupRectObj2 = popupSurf1.get_rect()
+    popupRectObj3 = popupSurf1.get_rect()
+    popupRectObj4 = popupSurf1.get_rect()
+    popupRectObj5 = popupSurf1.get_rect()
+    popupRectObj1.center = (1300, 400)
+    popupRectObj2.center = (1300, 420)
+    popupRectObj3.center = (1300, 440)
+    popupRectObj4.center = (1300, 460)
+    popupRectObj5.center = (1300, 480)
+
+    licitConfirmButtonSurf = fontObj.render('OK', True, WHITE)
+    licitConfirmButtonRect = licitConfirmButtonSurf.get_rect()
+    licitConfirmButtonRect.center = (700, 550)
+
+    playCardConfirmButtonSurf = fontObj.render('OK', True, WHITE)
+    playCardConfirmButtonRect = licitConfirmButtonSurf.get_rect()
+    playCardConfirmButtonRect.center = (1050, 800)
+
+    width, height = 1400, 900
+
+
+    pygame.display.set_caption('Ulti')
+    table_img = pygame.image.load(r'./images/table.jpg')
+
+    clientNumber = 0
+    card_images = dict()
+
+    deck = Deck()
+
+    for card in deck.cards:
+        card_images.update({card.color + card.value: pygame.image.load(
+            './images/' + card.color + card.value + '.jpg')})
 
 
     popupSurf1 = fontObj2.render(game.get_popups()[0], True, WHITE)
@@ -310,6 +287,26 @@ def redrawWindow(DISPLAYSURF, game, player):
         except:
             pass
 
+        # terített játéknál a vállaló lapjai:
+        try:
+            if player != game.selected_game.vallalo and game.selected_game.round > 1:
+                teritett_cards_to_display = []
+                displacement = 150
+                for card in game.players[game.selected_game.vallalo].hand:
+                    teritettCardSurf = card_images[card.color + card.value]
+                    teritettCardRect = teritettCardSurf.get_rect()
+                    teritettCardRect.top = 100
+                    teritettCardRect.left = displacement
+                    DISPLAYSURF.blit(teritettCardSurf, teritettCardRect)
+                    displacement += 80
+
+        except:
+            print("error in displaying terített")
+            e = sys.exc_info()
+            print(e)
+            pass
+
+
         if game.players[player].is_active:
             try:
                 if game.selected_game.is_valid_choice(game.cards_on_the_table, game.players[player].selected_cards[0], game.players[player].hand):
@@ -396,7 +393,7 @@ def redrawWindow(DISPLAYSURF, game, player):
                         okSurf = fontObj3.render("OK", True, WHITE)
 
                         for g in game.selected_game.kontra.keys():
-                            kontraSurfs.append(fontObj3.render(g, True, BLACK))
+                            kontraSurfs.append(fontObj3.render('Parti' if g == 'Passz' else g, True, BLACK))
                             kontraRects.append(kontraSurfs[-1].get_rect())
 
                         pygame.draw.rect(DISPLAYSURF, LIGHT_GREY, (1100, 200, 200, 400))
@@ -424,24 +421,7 @@ def redrawWindow(DISPLAYSURF, game, player):
                 print(e)
                 pass
 
-            # terített játéknál a vállaló lapjai:
-            try:
-                if player != game.selected_game.vallalo and game.selected_game.round > 1:
-                    teritett_cards_to_display = []
-                    displacement = 150
-                    for card in game.players[game.selected_game.vallalo].hand:
-                        teritettCardSurf = card_images[card.color + card.value]
-                        teritettCardRect = teritettCardSurf.get_rect()
-                        teritettCardRect.topn = 100
-                        teritettCardRect.left = displacement
-                        DISPLAYSURF.blit(teritettCardSurf, teritettCardRect)
-                        displacement += 80
 
-            except:
-                print("error in displaying terített")
-                e = sys.exc_info()
-                print(e)
-                pass
 
         try:
             if len(game.cards_on_the_table) > 0:
@@ -511,7 +491,7 @@ def redrawWindow(DISPLAYSURF, game, player):
     pygame.display.update()
 
 
-def main():
+def client(name, server_ip):
     global sortButton
     global p0PlayedCardStartPos
     global p1PlayedCardStartPos
@@ -521,19 +501,63 @@ def main():
     global p2PlayedCardEndPos
     global client_animation_completed
     global display_kontra
+    global POPUP
+    global JOIN
+    global DEAL_HAND
+    global BID
+    global PLAY_CARD
+    global INIT
+    global SHOW_DSCARD
+    global SHOW_TALON
+    global BIDDING
+    global GAME_PHASE
+    global SORTING
+    global SZINES
+    global SZINTELEN
+    global PLAY
+    global END
+
+    # pygame inits:
+    pygame.font.init()
+    pygame.display.init()
+
+    # message types:
+
+    POPUP = 'popup'
+    JOIN = 'join'
+    DEAL_HAND = 'deal_hand'
+    BID = 'bid'
+    PLAY_CARD = 'play_card'
+    INIT = 'init'
+    SHOW_DSCARD = 'show_discard'
+    SHOW_TALON = 'show_talon'
+    BIDDING = 'bidding'
+    GAME_PHASE = 'game_phase'
+    SORTING = 'sorting'
+    SZINES = "szines"
+    SZINTELEN = 'szintelen'
+    PLAY = 'play'
+    END = 'end'
+
+
+
     display_kontra = False
     client_animation_completed = False
     run = True
     clock = pygame.time.Clock()
-    n = Network(server, port)
+    n = Network(server_ip, 5555)
     player = int(n.getP())
     print("You are player", player)
 
+    DISPLAYSURF = pygame.display.set_mode((1400, 900), 0, 32)
 
     while run:
         clock.tick(60)
         try:
             game = n.send("get")
+            if game.players[player].name != name:
+                game.players[player].name = name
+                game = n.send_player_object(game.players[player])
         except:
             e = sys.exc_info()[0]
             print(e)
@@ -746,6 +770,7 @@ def main():
         game = n.send("get")
         redrawWindow(DISPLAYSURF, game, player)
 
-server = "192.168.178.24"
+# server_ip = "192.168.178.24"
+server_ip = '83.160.108.8'
 port = 5555
-main()
+# client(server_ip, port)

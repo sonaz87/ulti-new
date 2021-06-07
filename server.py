@@ -8,42 +8,9 @@ from game import Game
 import time
 
 
-# message types:
-
-POPUP = 'popup'
-JOIN = 'join'
-DEAL_HAND = 'deal_hand'
-BID = 'bid'
-PLAY_CARD = 'play_card'
-INIT = 'init'
-SHOW_DISCARD = 'show_discard'
-SHOW_TALON = 'show_talon'
-BIDDING = 'Bidding'
-GAME_PHASE = 'game_phase'
-STARTED = 'started'
-SORTING = 'sorting'
-PLAY = "play"
 
 
 
-
-server = "192.168.178.24"
-port = 5555
-
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-try:
-    s.bind((server, port))
-except socket.error:
-    str(socket.error)
-
-# s.listen takes the number of possible connections as an argument
-s.listen(3)
-print("Waiting for a connection, server started")
-
-players = []
-connected = set()
-idCount = 0
 
 
 def threaded_client(conn, p, game):
@@ -131,17 +98,74 @@ def threaded_client(conn, p, game):
     conn.close()
 
 
-game = Game()
 
 
-currentPlayer = 0
-while True:
-    conn, addr = s.accept()
-    print("Connected to:", addr)
 
-    idCount += 1
-    p = 0
 
-    client_thread = threading.Thread(target = threaded_client, args = (conn, currentPlayer, game))
-    client_thread.start()
-    currentPlayer += 1
+def server():
+
+    # message types:
+    global POPUP
+    global JOIN
+    global DEAL_HAND
+    global BID
+    global PLAY_CARD
+    global INIT
+    global SHOW_DISCARD
+    global SHOW_TALON
+    global BIDDING
+    global GAME_PHASE
+    global STARTED
+    global SORTING
+    global PLAY
+    global players
+    global connected
+    POPUP = 'popup'
+    JOIN = 'join'
+    DEAL_HAND = 'deal_hand'
+    BID = 'bid'
+    PLAY_CARD = 'play_card'
+    INIT = 'init'
+    SHOW_DISCARD = 'show_discard'
+    SHOW_TALON = 'show_talon'
+    BIDDING = 'Bidding'
+    GAME_PHASE = 'game_phase'
+    STARTED = 'started'
+    SORTING = 'sorting'
+    PLAY = "play"
+
+
+
+    # server_ip = "192.168.178.24"
+    server_ip = "83.160.108.8"
+    port = 5555
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(('0.0.0.0', port))
+    except socket.error:
+        print("socket error")
+        str(socket.error)
+
+    # s.listen takes the number of possible connections as an argument
+    s.listen(3)
+    print("Waiting for a connection, server started")
+
+    players = []
+    connected = set()
+    idCount = 0
+
+    game = Game()
+
+
+    currentPlayer = 0
+    while True:
+        conn, addr = s.accept()
+        print("Connected to:", addr)
+
+        idCount += 1
+        p = 0
+
+        client_thread = threading.Thread(target = threaded_client, args = (conn, currentPlayer, game))
+        client_thread.start()
+        currentPlayer += 1

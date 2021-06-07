@@ -1,3 +1,5 @@
+import pygame
+
 from game_elements import *
 import random
 import copy
@@ -199,10 +201,16 @@ class Game(object):
                 self.bidding_list.pop(0)
                 self.bidding_list.append("passz")
                 if self.bidding_list == ["passz", "passz", "passz"]:
+                    if self.current_game == 'Passz':
+                        self.restart_because_no_bidding()
+                        break
+
                     self.game_phase = PLAY
                     self.selected_game = self.possible_games[self.current_game][1]
                     self.selected_game.vallalo = self.vallalo
                     self.selected_game.talon = self.talon
+                    self.selected_game.vedok = [0,1,2]
+                    self.selected_game.vedok.remove(int(self.selected_game.vallalo))
                     print("play phase started")
                     break
                 else:
@@ -217,6 +225,19 @@ class Game(object):
                 active_counter += 1
         assert active_counter == 1, "active players amount bad after passz"
         print("pass completed")
+
+
+    def restart_because_no_bidding(self):
+        self.selected_game = 'No Game'
+        self.game_phase = BIDDING
+        print("game init")
+        self.deck.shuffle()
+        print("shuffle done")
+        self.deal_hands()
+        for p in self.players:
+            p.sort_hand()
+        print("passz reset done")
+
 
     def play_card(self):
         try:
@@ -256,6 +277,7 @@ class Game(object):
                 for p in self.players:
                     p.is_active = False
                 self.players[self.last_round_won].is_active = True
+                return self.last_round_won
             else:
                 x = self.cards_on_the_table[-1][1]
                 for p in self.players:
@@ -375,8 +397,11 @@ class Game(object):
             print("[*] - collect_played_cards : line 3 done")
             self.display_results()
             print("[*] - collect_played_cards : line 4 done")
-
         self.selected_game.round += 1
+
+
+
+
 
         for p in self.players:
             p.card_played = None
@@ -396,6 +421,12 @@ class Game(object):
 
         print("[*] collect_played_cards : last step done")
 
+        if hasattr(self.selected_game, 'can_be_lost'):
+            if self.selected_game.can_be_lost:
+                if self.selected_game.is_game_lost:
+                    self.game_phase = END
+                    self.selected_game.evaluate()
+                    self.display_results()
 
     def getHuszNegyven(self, adu):
         x = self.get_active_player_index()
