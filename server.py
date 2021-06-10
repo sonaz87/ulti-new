@@ -19,7 +19,7 @@ def threaded_client(conn, p, game):
 
     while True:
         try:
-            data = conn.recv(4096 * 32)
+            data = conn.recv(4096 * 64)
             try:
                 data = data.decode()
 
@@ -32,6 +32,11 @@ def threaded_client(conn, p, game):
                         if data == "test":
                             print("in test msg handling")
                             game.new_popup(data)
+                        elif data.split(":")[0] == 'name':
+                            p = int(data.split(":")[1])
+                            n = data.split(":")[2]
+                            game.players[p].name = n
+
                         elif data == SORTING:
                             print("in sorting msg handling")
                             game.players[p].change_sorting()
@@ -169,3 +174,6 @@ def server():
         client_thread = threading.Thread(target = threaded_client, args = (conn, currentPlayer, game))
         client_thread.start()
         currentPlayer += 1
+
+
+# server()

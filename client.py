@@ -67,6 +67,7 @@ def redrawWindow(DISPLAYSURF, game, player):
     global kontraConfirms
     global cancelKontraButton
     global startOverButton
+    global textRectObj
 
     # colors
 
@@ -92,9 +93,9 @@ def redrawWindow(DISPLAYSURF, game, player):
 
     # test button
 
-    textSurfaceObj = fontObj.render(popup_text, True, WHITE)
-    textRectObj = textSurfaceObj.get_rect()
-    textRectObj.center = (200, 150)
+    # textSurfaceObj = fontObj.render(popup_text, True, WHITE)
+    # textRectObj = textSurfaceObj.get_rect()
+    # textRectObj.center = (200, 150)
 
     # popup messages
     popupSurf1 = fontObj2.render('Placeholder1', True, WHITE)
@@ -144,7 +145,7 @@ def redrawWindow(DISPLAYSURF, game, player):
     popupSurf5 = fontObj2.render(game.get_popups()[4], True, WHITE)
 
     DISPLAYSURF.blit(table_img, (0, 0))
-    DISPLAYSURF.blit(textSurfaceObj, textRectObj)
+    # DISPLAYSURF.blit(textSurfaceObj, textRectObj)
     DISPLAYSURF.blit(popupSurf1, popupRectObj1)
     DISPLAYSURF.blit(popupSurf2, popupRectObj2)
     DISPLAYSURF.blit(popupSurf3, popupRectObj3)
@@ -491,7 +492,7 @@ def redrawWindow(DISPLAYSURF, game, player):
     pygame.display.update()
 
 
-def client(name, server_ip):
+def client(name_in, server_ip):
     global sortButton
     global p0PlayedCardStartPos
     global p1PlayedCardStartPos
@@ -551,13 +552,16 @@ def client(name, server_ip):
 
     DISPLAYSURF = pygame.display.set_mode((1400, 900), 0, 32)
 
+    game = n.send("get")
+
+    if game.players[player].name != name_in:
+        game = n.send("name:" + str(player) + ":" + str(name_in))
+
     while run:
         clock.tick(60)
         try:
             game = n.send("get")
-            if game.players[player].name != name:
-                game.players[player].name = name
-                game = n.send_player_object(game.players[player])
+
         except:
             e = sys.exc_info()[0]
             print(e)
@@ -615,8 +619,8 @@ def client(name, server_ip):
             elif event.type == MOUSEBUTTONUP:
                 mousex, mousey = event.pos
                 mouseClicked = True
-            if mouseClicked and textRectObj.collidepoint(mousex, mousey):
-                msg = n.send('test')
+            # if mouseClicked and textRectObj.collidepoint(mousex, mousey):
+            #     msg = n.send('test')
 
             # sorting button
             try:
@@ -702,7 +706,7 @@ def client(name, server_ip):
                                 game.players[player].licit_selected = i[2]
                             game = n.send_player_object(game.players[player])
 
-                    if mouseClicked and licitConfirmButtonRect.collidepoint(mousex, mousey):
+                    if mouseClicked and licitConfirmButton.collidepoint(mousex, mousey):
                         game = n.send("bid")
                 except:
                     e = sys.exc_info()
@@ -771,6 +775,6 @@ def client(name, server_ip):
         redrawWindow(DISPLAYSURF, game, player)
 
 # server_ip = "192.168.178.24"
-server_ip = '83.160.108.8'
-port = 5555
-# client(server_ip, port)
+# server_ip = '83.160.108.8'
+# port = 5555
+# client("Feri", server_ip)

@@ -35,6 +35,7 @@ class Player(object):
         self.ready_for_next_round = False
 
     def update_all(self, other):
+        self.name = other.name
         self.is_dealer = other.is_dealer
         self.is_active = other.is_active
         self.hand = other.hand[:]
@@ -48,8 +49,12 @@ class Player(object):
         self.adu_selected = other.adu_selected
         self.ready_for_next_round = other.ready_for_next_round
 
+
     def get_name(self):
         return self.name
+
+    def set_name(self, name):
+        self.name = name
 
     def set_dealer(self, val):
         self.is_dealer = val
