@@ -184,46 +184,39 @@ class Game(object):
 
     def pickup(self):
         print("pickup started")
-        for p in self.players:
-            if p.is_active:
-                p.wants_to_bid = True
-                for c in self.talon:
-                    p.hand.append(c)
-                    p.selected_cards.append(c)
-                    p.sort_hand()
-                self.talon.clear()
+        p = self.get_active_player_index()
+        self.new_popup(p.name + " felvette")
+        p.wants_to_bid = True
+        for c in self.talon:
+            p.hand.append(c)
+            p.selected_cards.append(c)
+            p.sort_hand()
+        self.talon.clear()
         print("pickup completed")
 
     def passz(self):
         print("pass started")
-        for p in self.players:
-            if p.is_active:
-                self.bidding_list.pop(0)
-                self.bidding_list.append("passz")
-                if self.bidding_list == ["passz", "passz", "passz"]:
-                    if self.current_game == 'Passz':
-                        self.restart_because_no_bidding()
-                        break
+        p = self.get_active_player_index()
+        self.bidding_list.pop(0)
+        self.bidding_list.append("passz")
+        if self.bidding_list == ["passz", "passz", "passz"]:
+            if self.current_game == 'Passz':
+                self.restart_because_no_bidding()
 
-                    self.game_phase = PLAY
-                    self.selected_game = self.possible_games[self.current_game][1]
-                    self.selected_game.vallalo = self.vallalo
-                    self.selected_game.talon = self.talon
-                    self.selected_game.vedok = [0,1,2]
-                    self.selected_game.vedok.remove(int(self.selected_game.vallalo))
-                    print("play phase started")
-                    break
-                else:
-                    p.is_active = False
-                    self.players[self.players.index(p) - 1].is_active = True
-                    break
+            else:
+                self.game_phase = PLAY
+                self.selected_game = self.possible_games[self.current_game][1]
+                self.selected_game.vallalo = self.vallalo
+                self.selected_game.talon = self.talon
+                self.selected_game.vedok = [0,1,2]
+                self.selected_game.vedok.remove(int(self.selected_game.vallalo))
+                print("play phase started")
+        else:
+            p.is_active = False
+            self.players[self.players.index(p) - 1].is_active = True
         print(self.bidding_list)
 
         active_counter = 0
-        for p in self.players:
-            if p.is_active:
-                active_counter += 1
-        assert active_counter == 1, "active players amount bad after passz"
         print("pass completed")
 
 
@@ -236,6 +229,7 @@ class Game(object):
         self.deal_hands()
         for p in self.players:
             p.sort_hand()
+            p.licit_selected = None
         print("passz reset done")
 
 
@@ -451,14 +445,19 @@ class Game(object):
         if husz > 0:
             self.new_popup(self.players[x].name + ": van " + str(husz) + " húszam")
         self.selected_game.bemondtak.append(x)
+        for y in range(3):
+            print("player ", y , " points: ", self.selected_game.player_points[y])
 
     def kontra(self, num):
         num = int(num)
-        if self.selected_game.name not in ["Betli", "Rebetli", "Színtelen durchmarsch", "Redurchmarsch", "Terített betli", "Színtelen Terített Durchmarsch"]:
+        if self.selected_game.name not in ["Betli", "Rebetli", "Színtelen durchmarsch", "Redurchmarsch", "Terített betli", "Terített színtelen durchmarsch"]:
+            print(" [*] in game kontra()")
+            print("selected game.jazek_lista: , num", self.selected_game.jatek_lista, num)
             jatek = self.selected_game.jatek_lista[num]
             thisround = self.selected_game.round
+            print("selected game kontra: ", self.selected_game.kontra)
             self.selected_game.kontra[jatek][thisround][1] = True
-            if thisround % 2 == 1:
+            if self.get_active_player_index() != self.selected_game.vallalo:
                 self.selected_game.kontra[jatek][thisround][2] = True
 
 

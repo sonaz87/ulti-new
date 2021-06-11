@@ -1,5 +1,6 @@
 import pygame
 import sys
+import pickle
 from network import Network
 from game_elements import *
 from pygame.locals import *
@@ -290,7 +291,7 @@ def redrawWindow(DISPLAYSURF, game, player):
 
         # terített játéknál a vállaló lapjai:
         try:
-            if player != game.selected_game.vallalo and game.selected_game.round > 1:
+            if player != game.selected_game.vallalo and game.selected_game.round > 1 and game.selected_game.teritett:
                 teritett_cards_to_display = []
                 displacement = 150
                 for card in game.players[game.selected_game.vallalo].hand:
@@ -310,9 +311,10 @@ def redrawWindow(DISPLAYSURF, game, player):
 
         if game.players[player].is_active:
             try:
-                if game.selected_game.is_valid_choice(game.cards_on_the_table, game.players[player].selected_cards[0], game.players[player].hand):
-                    playCardConfirmButton = pygame.draw.rect(DISPLAYSURF, GREY, playCardConfirmButtonRect)
-                    DISPLAYSURF.blit(playCardConfirmButtonSurf, playCardConfirmButtonRect)
+                if len(game.players[player].selected_cards) > 0:
+                    if game.selected_game.is_valid_choice(game.cards_on_the_table, game.players[player].selected_cards[0], game.players[player].hand):
+                        playCardConfirmButton = pygame.draw.rect(DISPLAYSURF, GREY, playCardConfirmButtonRect)
+                        DISPLAYSURF.blit(playCardConfirmButtonSurf, playCardConfirmButtonRect)
             except:
                 print("error in play phase display")
                 e = sys.exc_info()
@@ -492,7 +494,7 @@ def redrawWindow(DISPLAYSURF, game, player):
     pygame.display.update()
 
 
-def client(name_in, server_ip):
+def client(name_in, server_ip, password):
     global sortButton
     global p0PlayedCardStartPos
     global p1PlayedCardStartPos
@@ -546,21 +548,24 @@ def client(name_in, server_ip):
     client_animation_completed = False
     run = True
     clock = pygame.time.Clock()
-    n = Network(server_ip, 5555)
+    n = Network(server_ip, 5555, password)
     player = int(n.getP())
     print("You are player", player)
 
     DISPLAYSURF = pygame.display.set_mode((1400, 900), 0, 32)
 
-    game = n.send("get")
+    data = pickle.dumps("get")
+    game = n.send(data, 0)
 
     if game.players[player].name != name_in:
-        game = n.send("name:" + str(player) + ":" + str(name_in))
+        data = pickle.dumps("name:" + str(player) + ":" + str(name_in))
+        game = n.send(data, 0)
 
     while run:
         clock.tick(60)
         try:
-            game = n.send("get")
+            data = pickle.dumps("get")
+            game = n.send(data, 0)
 
         except:
             e = sys.exc_info()[0]
@@ -619,17 +624,15 @@ def client(name_in, server_ip):
             elif event.type == MOUSEBUTTONUP:
                 mousex, mousey = event.pos
                 mouseClicked = True
-            # if mouseClicked and textRectObj.collidepoint(mousex, mousey):
-            #     msg = n.send('test')
 
-            # sorting button
             try:
                 if mouseClicked and sortButton.collidepoint(mousex, mousey):
                     if game.players[player].sorting == SZINTELEN:
                         game.players[player].sorting = SZINES
                     else:
                         game.players[player].sorting = SZINTELEN
-                    game = n.send_player_object(game.players[player])
+                    data = pickle.dumps(game.players[player])
+                    game = n.send(data, 1)
 
             except:
                 e = sys.exc_info()
@@ -643,7 +646,8 @@ def client(name_in, server_ip):
                 if game.players[player].is_active:
                     # a legnagyobb értékű játékra nem lehet rálicitálni
                     if game.current_game == "Piros terített ulti durchmarsch húsz-száz":
-                        n.send("passz")
+                        data = pickle.dumps("passz")
+                        n.send(data, 0)
                     card_select_list = []
                     for i in range(len(cards_to_display)):
                         if mouseClicked and cards_to_display[i][1].collidepoint(mousex, mousey):
@@ -676,7 +680,8 @@ def client(name_in, server_ip):
                                         game.players[player].selected_cards.pop(0)
                                         game.players[player].selected_cards.append(game.players[player].hand[card_select_list[0]])
 
-                    game = n.send_player_object(game.players[player])
+                    data = pickle.dumps(game.players[player])
+                    game = n.send(data, 1)
             except:
                 e = sys.exc_info()
                 print("error in card selection event handling")
@@ -687,9 +692,11 @@ def client(name_in, server_ip):
             try:
                 if game.game_phase == BIDDING and game.players[player].is_active and not game.players[player].wants_to_bid:
                     if mouseClicked and pickUpTalonButton.collidepoint(mousex, mousey):
-                        game = n.send("pickup")
+                        data = pickle.dumps("pickup")
+                        game = n.send(data, 0)
                     if mouseClicked and passInBiddingButton.collidepoint(mousex, mousey):
-                        game = n.send("passz")
+                        data = pickle.dumps("passz")
+                        game = n.send(data, 0)
             except:
                 e = sys.exc_info()
                 print("error in wants to bid selection event handling")
@@ -704,14 +711,16 @@ def client(name_in, server_ip):
                                 pass
                             else:
                                 game.players[player].licit_selected = i[2]
-                            game = n.send_player_object(game.players[player])
+                            data = pickle.dumps(game.players[player])
+                            game = n.send(data, 1)
 
                     if mouseClicked and licitConfirmButton.collidepoint(mousex, mousey):
-                        game = n.send("bid")
+                        data = pickle.dumps("bid")
+                        game = n.send(data, 0)
                 except:
-                    e = sys.exc_info()
-                    print("error in licit selection event handling")
-                    print(e)
+                    # e = sys.exc_info()
+                    # print("error in licit selection event handling")
+                    # print(e)
                     pass
 
             # play section
@@ -719,29 +728,35 @@ def client(name_in, server_ip):
 
                 try:
                     if mouseClicked and playCardConfirmButton.collidepoint(mousex, mousey):
-                        game = n.send("card_was_played")
+                        data = pickle.dumps("card_was_played")
+                        game = n.send(data, 0)
                 except:
                     pass
 
                 try:
                     if mouseClicked and huszNegyvenButton.collidepoint(mousex, mousey):
-                        game = n.send("husznegyven")
+                        data = pickle.dumps("husznegyven")
+                        game = n.send(data, 0)
                 except:
                     pass
 
                 try:
                     if mouseClicked and aduTokRect.collidepoint(mousex, mousey):
                         game.players[player].adu_selected = 'tok'
-                        game = n.send_player_object(game.players[player])
+                        data = pickle.dumps(game.players[player])
+                        game = n.send(data, 1)
                     if mouseClicked and aduZoldRect.collidepoint(mousex, mousey):
                         game.players[player].adu_selected = 'zold'
-                        game = n.send_player_object(game.players[player])
+                        data = pickle.dumps(game.players[player])
+                        game = n.send(data, 1)
                     if mouseClicked and aduMakkRect.collidepoint(mousex, mousey):
                         game.players[player].adu_selected = 'makk'
-                        game = n.send_player_object(game.players[player])
+                        data = pickle.dumps(game.players[player])
+                        game = n.send(data, 1)
 
                     if mouseClicked and aduConfirmButton.collidepoint(mousex, mousey):
-                        game = n.send("adu:" + game.players[player].adu_selected)
+                        data = pickle.dumps("adu:" + game.players[player].adu_selected)
+                        game = n.send(data, 0)
                 except:
                     pass
                 try:
@@ -753,7 +768,8 @@ def client(name_in, server_ip):
                 try:
                     for i in range(len(kontraConfirms)):
                         if mouseClicked and kontraConfirms[i].collidepoint(mousex, mousey):
-                            game = n.send("kontra:" + str(i))
+                            data = pickle.dumps("kontra:" + str(i))
+                            game = n.send(data, 0)
                 except:
                     pass
 
@@ -767,14 +783,39 @@ def client(name_in, server_ip):
                 if game.game_phase == END:
                     if mouseClicked and startOverButton.collidepoint(mousex, mousey):
                         game.players[player].ready_for_next_round = True
-                        game = n.send_player_object(game.players[player])
-                        game = n.send("reset")
+                        data = pickle.dumps(game.players[player])
+                        game = n.send(data, 1)
+                        data = pickle.dumps("reset")
+                        game = n.send(data, 0)
             except:
                 pass
-        game = n.send("get")
+        data = pickle.dumps("get")
+        game = n.send(data, 0)
+        # print("game size", get_size(game))
         redrawWindow(DISPLAYSURF, game, player)
 
+def get_size(obj, seen=None):
+    """Recursively finds size of objects"""
+    size = sys.getsizeof(obj)
+    if seen is None:
+        seen = set()
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+    # Important mark as seen *before* entering recursion to gracefully handle
+    # self-referential objects
+    seen.add(obj_id)
+    if isinstance(obj, dict):
+        size += sum([get_size(v, seen) for v in obj.values()])
+        size += sum([get_size(k, seen) for k in obj.keys()])
+    elif hasattr(obj, '__dict__'):
+        size += get_size(obj.__dict__, seen)
+    elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
+        size += sum([get_size(i, seen) for i in obj])
+    return size
+
+
 # server_ip = "192.168.178.24"
-# server_ip = '83.160.108.8'
+server_ip = '83.160.108.8'
 # port = 5555
 # client("Feri", server_ip)

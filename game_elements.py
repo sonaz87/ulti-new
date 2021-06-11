@@ -755,7 +755,7 @@ class Ulti(Szines):
         self.jatekok = {"Passz": [False, 0],
                         "Ulti": [False, 0]
                         }
-        self.jatek_lista = ["Passz, Ulti"]
+        self.jatek_lista = ["Passz", "Ulti"]
         self.csendes_szaz_lehet = True
         self.csendes_duri_lehet = True
         self.csendes_szaz = False
@@ -1347,7 +1347,7 @@ class TeritettDurchmarsch(Szines):
 class SzintelenTeritettDurchmarsch(SzintelenDurchmarsch):
     def __init__(self, players, lrw):
         super().__init__(players, lrw)
-        self.name = "Terített durchmarsch"
+        self.name = "Terített színtelen durchmarsch"
         self.jatekok = {"Durchmarsch": [False, 0]}
         self.jatek_lista = ["Durchmarsch"]
         self.teritett = True
