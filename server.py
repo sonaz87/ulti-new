@@ -39,7 +39,6 @@ def threaded_client(conn, p, game):
 
             if recv_data_id == 0:
                 try:
-                    # TODO! milyen bejövő data lehet?
                     if data == "test":
                         print("in test msg handling")
                         game.new_popup(data)
@@ -70,14 +69,16 @@ def threaded_client(conn, p, game):
                     elif data == "card_was_played":
                         print("card_was_played called")
                         game.play_card()
-                        serialized_payload = pickle.dumps(game)
-                        conn.sendall(struct.pack('>I', len(serialized_payload)))
-                        conn.sendall(struct.pack('>I', 2))
-                        conn.sendall(serialized_payload)
+
                         if len(game.cards_on_the_table) == 3:
+                            serialized_payload = pickle.dumps(game)
+                            conn.sendall(struct.pack('>I', len(serialized_payload)))
+                            conn.sendall(struct.pack('>I', 2))
+                            conn.sendall(serialized_payload)
                             print("all 3 players played a cards, invoking card collection")
                             time.sleep(2)
                             game.collect_played_cards()
+                            continue
                         else:
                             print("not all players played yet")
                     elif data.split(":")[0] == "adu":
@@ -193,25 +194,48 @@ def server(password = 'pirosulti'):
 
 
     currentPlayer = 0
+    connected_clients = []
     while True:
-        conn, addr = s.accept()
+        if len(game.players) < 3:
+            conn, addr = s.accept()
+            if addr[0] not in connected_clients:
+                connected_clients.append([addr[0], idCount])
+                print(connected_clients)
 
-        result = conn.recv(4096).decode()
-        print("password should have been received: ", result)
-        if result != password:
-            conn.send(str.encode('authentication failed'))
-            conn.close()
-        else:
-            conn.sendall(str.encode('authenticated'))
+                result = conn.recv(4096).decode()
+                print("password should have been received: ", result)
+                if result != password:
+                    conn.send(str.encode('authentication failed'))
+                    conn.close()
+                else:
+                    conn.sendall(str.encode('authenticated'))
 
-            print("Connected to:", addr)
+                    print("Connected to:", addr)
 
-            idCount += 1
-            p = 0
+                    idCount += 1
+                    p = 0
 
-            client_thread = threading.Thread(target = threaded_client, args = (conn, currentPlayer, game))
-            client_thread.start()
-            currentPlayer += 1
+                    client_thread = threading.Thread(target = threaded_client, args = (conn, currentPlayer, game))
+                    client_thread.start()
+                    currentPlayer += 1
+            #TODO ezt vhogy le kéne tesztelni...
+            else:
+                result = conn.recv(4096).decode()
+                print("password should have been received: ", result)
+                if result != password:
+                    conn.send(str.encode('authentication failed'))
+                    conn.close()
+                else:
+                    conn.sendall(str.encode('authenticated'))
+
+                    print("Connected to:", addr)
+
+                    user_id = int()
+                    for element in connected_clients:
+                        if addr[0] in element:
+                            user_id = element[1]
+                    client_thread = threading.Thread(target=threaded_client, args=(conn, user_id, game))
+                    client_thread.start()
 
 
 # server()

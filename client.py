@@ -146,7 +146,6 @@ def redrawWindow(DISPLAYSURF, game, player):
     popupSurf5 = fontObj2.render(game.get_popups()[4], True, WHITE)
 
     DISPLAYSURF.blit(table_img, (0, 0))
-    # DISPLAYSURF.blit(textSurfaceObj, textRectObj)
     DISPLAYSURF.blit(popupSurf1, popupRectObj1)
     DISPLAYSURF.blit(popupSurf2, popupRectObj2)
     DISPLAYSURF.blit(popupSurf3, popupRectObj3)
@@ -266,7 +265,7 @@ def redrawWindow(DISPLAYSURF, game, player):
                     DISPLAYSURF.blit(licitConfirmButtonSurf, licitConfirmButtonRect)
 
     # play phase
-
+    # vállalt játék megjelenítése
     if game.game_phase == PLAY:
         try:
             if game.selected_game.adu != None:
@@ -412,7 +411,7 @@ def redrawWindow(DISPLAYSURF, game, player):
                             DISPLAYSURF.blit(okSurf, confirmRect)
                             displacement += 40
 
-                        cancelkontraSurf = fontObj.render("Mégse", True, WHITE)
+                        cancelkontraSurf = fontObj.render("Bezárás", True, WHITE)
                         cancelkontraRect = cancelkontraSurf.get_rect()
                         cancelkontraRect.center = (1200, 530)
                         cancelKontraButton = pygame.draw.rect(DISPLAYSURF, DARK_GREY, cancelkontraRect)
@@ -563,18 +562,19 @@ def client(name_in, server_ip, password):
 
     while run:
         clock.tick(60)
-        try:
-            data = pickle.dumps("get")
-            game = n.send(data, 0)
+        game_updated = False
+        # try:
+        #     data = pickle.dumps("get")
+        #     game = n.send(data, 0)
+        #
+        # except:
+        #     e = sys.exc_info()[0]
+        #     print(e)
+        #     run = False
+        #     print("Couldn't get game")
+        #     break
 
-        except:
-            e = sys.exc_info()[0]
-            print(e)
-            run = False
-            print("Couldn't get game")
-            break
-
-        redrawWindow(DISPLAYSURF, game, player)
+        # redrawWindow(DISPLAYSURF, game, player)
         # defining starting and ending playes for played cards
         try:
             if game.players[0].card_played == None:
@@ -633,6 +633,7 @@ def client(name_in, server_ip, password):
                         game.players[player].sorting = SZINTELEN
                     data = pickle.dumps(game.players[player])
                     game = n.send(data, 1)
+                    game_updated = True
 
             except:
                 e = sys.exc_info()
@@ -647,7 +648,8 @@ def client(name_in, server_ip, password):
                     # a legnagyobb értékű játékra nem lehet rálicitálni
                     if game.current_game == "Piros terített ulti durchmarsch húsz-száz":
                         data = pickle.dumps("passz")
-                        n.send(data, 0)
+                        game = n.send(data, 0)
+                        game_updated = True
                     card_select_list = []
                     for i in range(len(cards_to_display)):
                         if mouseClicked and cards_to_display[i][1].collidepoint(mousex, mousey):
@@ -682,6 +684,7 @@ def client(name_in, server_ip, password):
 
                     data = pickle.dumps(game.players[player])
                     game = n.send(data, 1)
+                    game_updated = True
             except:
                 e = sys.exc_info()
                 print("error in card selection event handling")
@@ -694,9 +697,11 @@ def client(name_in, server_ip, password):
                     if mouseClicked and pickUpTalonButton.collidepoint(mousex, mousey):
                         data = pickle.dumps("pickup")
                         game = n.send(data, 0)
+                        game_updated = True
                     if mouseClicked and passInBiddingButton.collidepoint(mousex, mousey):
                         data = pickle.dumps("passz")
                         game = n.send(data, 0)
+                        game_updated = True
             except:
                 e = sys.exc_info()
                 print("error in wants to bid selection event handling")
@@ -713,10 +718,12 @@ def client(name_in, server_ip, password):
                                 game.players[player].licit_selected = i[2]
                             data = pickle.dumps(game.players[player])
                             game = n.send(data, 1)
+                            game_updated = True
 
                     if mouseClicked and licitConfirmButton.collidepoint(mousex, mousey):
                         data = pickle.dumps("bid")
                         game = n.send(data, 0)
+                        game_updated = True
                 except:
                     # e = sys.exc_info()
                     # print("error in licit selection event handling")
@@ -730,6 +737,7 @@ def client(name_in, server_ip, password):
                     if mouseClicked and playCardConfirmButton.collidepoint(mousex, mousey):
                         data = pickle.dumps("card_was_played")
                         game = n.send(data, 0)
+                        game_updated = True
                 except:
                     pass
 
@@ -737,6 +745,7 @@ def client(name_in, server_ip, password):
                     if mouseClicked and huszNegyvenButton.collidepoint(mousex, mousey):
                         data = pickle.dumps("husznegyven")
                         game = n.send(data, 0)
+                        game_updated = True
                 except:
                     pass
 
@@ -745,18 +754,22 @@ def client(name_in, server_ip, password):
                         game.players[player].adu_selected = 'tok'
                         data = pickle.dumps(game.players[player])
                         game = n.send(data, 1)
+                        game_updated = True
                     if mouseClicked and aduZoldRect.collidepoint(mousex, mousey):
                         game.players[player].adu_selected = 'zold'
                         data = pickle.dumps(game.players[player])
                         game = n.send(data, 1)
+                        game_updated = True
                     if mouseClicked and aduMakkRect.collidepoint(mousex, mousey):
                         game.players[player].adu_selected = 'makk'
                         data = pickle.dumps(game.players[player])
                         game = n.send(data, 1)
+                        game_updated = True
 
                     if mouseClicked and aduConfirmButton.collidepoint(mousex, mousey):
                         data = pickle.dumps("adu:" + game.players[player].adu_selected)
                         game = n.send(data, 0)
+                        game_updated = True
                 except:
                     pass
                 try:
@@ -770,6 +783,7 @@ def client(name_in, server_ip, password):
                         if mouseClicked and kontraConfirms[i].collidepoint(mousex, mousey):
                             data = pickle.dumps("kontra:" + str(i))
                             game = n.send(data, 0)
+                            game_updated = True
                 except:
                     pass
 
@@ -787,10 +801,12 @@ def client(name_in, server_ip, password):
                         game = n.send(data, 1)
                         data = pickle.dumps("reset")
                         game = n.send(data, 0)
+                        game_updated = True
             except:
                 pass
-        data = pickle.dumps("get")
-        game = n.send(data, 0)
+        if not game_updated:
+            data = pickle.dumps("get")
+            game = n.send(data, 0)
         # print("game size", get_size(game))
         redrawWindow(DISPLAYSURF, game, player)
 

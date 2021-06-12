@@ -339,7 +339,7 @@ class Szines(Alapjatek):
                     return True
 
         # ha mindkettő nem adu
-            #TODO megnézni azt az esetet, ha a második kártya bedobott lap - ezt itt átnézni rendesen, mert szar
+
             elif cards_on_the_table[0][0].color != self.adu and cards_on_the_table[1][0].color != self.adu:
                 if is_color_available(cards_on_the_table[0][0].color, hand):
                     if cards_on_the_table[0][0].color == cards_on_the_table[1][0].color:
@@ -530,8 +530,6 @@ class Passz(Szines):
     def evaluate_passz(self, points):
         print("pass evaluate started")
         print("player discards:")
-        self.vedok = [0,1,2]
-        self.vedok.remove(self.vallalo)
         print("vedok", self.vedok)
         print("vallalo", self.vallalo)
 
@@ -778,7 +776,8 @@ class Ulti(Szines):
             "piros": "Piros"
         }
 
-
+        print(" [*] ulti pontozás")
+        print("vállaló, védők:", self.vallalo, self.vedok)
         for g in self.jatekok.keys():
             highest_kontra = 0
             for key, value in self.kontra[g].items():
@@ -796,11 +795,14 @@ class Ulti(Szines):
             self.players[self.vallalo].points += points * 2 * (2 ** self.jatekok["Ulti"][1])
             for i in self.vedok:
                 self.players[i].points -= points * (2 ** self.jatekok["Ulti"][1])
+            for i in self.players:
+                print("ulti pontozás után", i.name, i.points)
         else:
             self.players[self.vallalo].points -= 2 * points * 2 * (2 ** self.jatekok["Ulti"][1])
             for i in self.vedok:
                 self.players[i].points += 2 * points * (2 ** self.jatekok["Ulti"][1])
-
+            for i in self.players:
+                print("ulti pontozás után selected playersben", i.name, i.points)
 
 class Betli(Szintelen):
     def __init__(self, players, lrw):
@@ -1055,7 +1057,7 @@ class HuszSzaz(Szines):
                 if card[0].value in ["tizes", "asz"]:
                     vallalo_points += 10
 
-        if husz and vallalo_points > 100:
+        if husz and vallalo_points >= 100:
             # húsz-száz nyerve
             self.jatekok["Húsz-száz"][0] = True
             self.players[self.vallalo].points += points * 2 * (2 ** self.jatekok["Húsz-száz"][1])
@@ -1067,7 +1069,7 @@ class HuszSzaz(Szines):
             self.players[self.vallalo].points -= points * 2 * (2 ** self.jatekok["Húsz-száz"][1])
             for i in self.vedok:
                 self.players[i].points += points * (2 ** self.jatekok["Húsz-száz"][1])
-        self.player_points[self.vallalo] += 20
+
 
 
 class PirosUlti(Ulti):

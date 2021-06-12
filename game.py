@@ -5,6 +5,7 @@ import random
 import copy
 import time
 import sys
+import csv
 
 STARTED = 'started'
 INIT = 'init'
@@ -157,40 +158,36 @@ class Game(object):
 
     def accept_bid(self):
         print("accept bid started")
-        for p in self.players:
-            if p.is_active:
-                print("active player found")
-                self.current_game = p.licit_selected[:]
-                self.bidding_list.pop(0)
-                self.bidding_list.append(p.licit_selected)
-                self.talon = p.selected_cards[:]
-                for c in p.selected_cards:
-                    p.hand.remove(c)
+        p = self.get_active_player_index()
+        self.current_game = self.players[p].licit_selected[:]
+        self.bidding_list.pop(0)
+        self.bidding_list.append(self.players[p].licit_selected)
+        self.talon = self.players[p].selected_cards[:]
+        for c in self.players[p].selected_cards:
+            self.players[p].hand.remove(c)
 
-                self.vallalo = self.get_active_player_index()
-                p.selected_cards.clear()
-                p.wants_to_bid = False
-                p.is_active = False
-                p.licit_selected = None
-                print(self.bidding_list)
-                self.players[self.players.index(p)-1].is_active = True
-                break
-        active_counter = 0
-        for p in self.players:
-            if p.is_active:
-                active_counter += 1
-        assert active_counter == 1, "active players amount bad after accept_bid"
-        print("accept bid completed")
+        self.vallalo = p
+        data = [self.players[p].hand, self.players[p].licit_selected, self.talon]
+        self.log_step("bidding.log", data)
+        self.players[p].selected_cards.clear()
+        self.players[p].wants_to_bid = False
+        self.players[p].is_active = False
+        self.players[p].licit_selected = None
+        print(self.bidding_list)
+        self.players[p-1].is_active = True
+
 
     def pickup(self):
         print("pickup started")
         p = self.get_active_player_index()
-        self.new_popup(p.name + " felvette")
-        p.wants_to_bid = True
+        data = [self.players[p].hand, self.players[p].licit_selected]
+        self.log_step("pickup.log", data)
+        self.new_popup(self.players[p].name + " felvette")
+        self.players[p].wants_to_bid = True
         for c in self.talon:
-            p.hand.append(c)
-            p.selected_cards.append(c)
-            p.sort_hand()
+            self.players[p].hand.append(c)
+            self.players[p].selected_cards.append(c)
+            self.players[p].sort_hand()
         self.talon.clear()
         print("pickup completed")
 
@@ -212,8 +209,8 @@ class Game(object):
                 self.selected_game.vedok.remove(int(self.selected_game.vallalo))
                 print("play phase started")
         else:
-            p.is_active = False
-            self.players[self.players.index(p) - 1].is_active = True
+            self.players[p].is_active = False
+            self.players[p - 1].is_active = True
         print(self.bidding_list)
 
         active_counter = 0
@@ -239,6 +236,8 @@ class Game(object):
             print(" [*] in play_card:: active player index is :", x)
             if len(self.players[x].selected_cards) == 1 and self.players[x].card_played == None:
                 self.players[x].card_played = copy.deepcopy(self.players[x].selected_cards[0])
+                data = [self.players[x].hand, self.players[x].card_played, self.cards_on_the_table, self.selected_game]
+                self.log_step("play_card.log", data)
                 self.card_played = [copy.deepcopy(self.players[x].selected_cards[0]), x]
                 self.players[x].hand.remove(self.players[x].selected_cards[0])
                 self.players[x].selected_cards.clear()
@@ -353,8 +352,8 @@ class Game(object):
     def remove_discards_from_hand(self):
         discards = []
         for p in self.players:
-            for round in p.discard:
-                for c in round:
+            for this_round in p.discard:
+                for c in this_round:
                     discards.append(c[0])
 
         for c in self.cards_on_the_table:
@@ -374,6 +373,8 @@ class Game(object):
             for p in self.players:
                 if i[0] in p.hand:
                     p.hand.remove(i[0])
+                if i[0] in p.selected_cards:
+                    p.selected_cards.remove(i[0])
         print("[*] collect_played_cards : removed palyed cards from hands")
         x = self.who_won_round()
         self.new_popup(self.players[x].name + " vitte")
@@ -384,19 +385,12 @@ class Game(object):
         if self.selected_game.round == 10:
             print("[*] - collect_played_cards : round 10 trigger")
             self.selected_game.player_points[x] += 10
-            print("[*] - collect_played_cards : line 1 done")
             self.game_phase = END
-            print("[*] - collect_played_cards : line 2 done")
             self.selected_game.evaluate()
-            print("[*] - collect_played_cards : line 3 done")
+            data = [self.selected_game]
+            self.log_step("completed_game.log", data)
             self.display_results()
-            print("[*] - collect_played_cards : line 4 done")
         self.selected_game.round += 1
-
-
-
-
-
         for p in self.players:
             p.card_played = None
             p.is_active = False
@@ -406,9 +400,6 @@ class Game(object):
         print("[*] collect_played_cards : resets done")
 
         self.remove_discards_from_hand()
-
-
-
         print("[*] collect_played_cards : dicards after collect_played_cards")
         for p in self.players:
             print(p.name, p.discard)
@@ -417,7 +408,7 @@ class Game(object):
 
         if hasattr(self.selected_game, 'can_be_lost'):
             if self.selected_game.can_be_lost:
-                if self.selected_game.is_game_lost:
+                if self.selected_game.is_game_lost():
                     self.game_phase = END
                     self.selected_game.evaluate()
                     self.display_results()
@@ -452,7 +443,7 @@ class Game(object):
         num = int(num)
         if self.selected_game.name not in ["Betli", "Rebetli", "Színtelen durchmarsch", "Redurchmarsch", "Terített betli", "Terített színtelen durchmarsch"]:
             print(" [*] in game kontra()")
-            print("selected game.jazek_lista: , num", self.selected_game.jatek_lista, num)
+            print("selected game.jatek_lista: , num", self.selected_game.jatek_lista, num)
             jatek = self.selected_game.jatek_lista[num]
             thisround = self.selected_game.round
             print("selected game kontra: ", self.selected_game.kontra)
@@ -465,8 +456,8 @@ class Game(object):
             jatek = self.selected_game.jatek_lista[num]
             thisround = self.selected_game.round
 
-            self.selected_game.vedok = [0,1,2]
-            self.selected_game.vedok.remove(self.selected_game.vallalo)
+            # self.selected_game.vedok = [0,1,2]
+            # self.selected_game.vedok.remove(self.selected_game.vallalo)
 
             self.selected_game.kontra[jatek][thisround][1] = True
             if thisround % 2 == 1:
@@ -474,7 +465,6 @@ class Game(object):
 
         self.new_popup(self.players[self.get_active_player_index()].name + " - " + self.selected_game.kontra_alap[self.selected_game.round][0] + " " + self.selected_game.jatek_lista[num])
 
-        #TODO display_results()
 
     def display_results(self):
         if not self.players[0].ready_for_next_round or not self.players[1].ready_for_next_round or not self.players[2].ready_for_next_round:
@@ -507,3 +497,8 @@ class Game(object):
             self.ready_for_next_round = False
 
         self.initialize()
+
+    def log_step(self, filename, data):
+        with open(filename, 'a', encoding= 'UTF-8', newline='') as file:
+            writer = csv.writer(file, delimiter = ";")
+            writer.writerow(data)
