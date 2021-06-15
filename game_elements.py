@@ -7,6 +7,7 @@ Created on Mon May 17 14:25:07 2021
 
 from random import shuffle
 import copy
+import traceback
 # from random import choices
 # import pygame
 # import sys
@@ -18,8 +19,9 @@ SZINTELEN = 'szintelen'
 
 
 class Player(object):
-    def __init__(self, name):
+    def __init__(self, name, ip):
         self.name = str(name)
+        self.ip = str(ip)
         self.is_dealer = False
         self.is_active = False
         self.hand = []
@@ -220,7 +222,7 @@ class Alapjatek(object):
             2 : ['Rekontra', False],
             3 : ['Szubkontra', False, False],
             4 : ['Mordkontra', False],
-            5 : ['Hirskontra', False, False],
+            5 : ['Hirschkontra', False, False],
             6 : ['Fedák Sári', False],
             7 : ['Kerekes bicikli', False, False],
             8 : ['Darth Vader', False],
@@ -230,6 +232,9 @@ class Alapjatek(object):
         self.kontra = dict()
         self.teritett = False
         self.last_round_won = lrw
+        self.csendes_szaz_lehet = False
+        self.csendes_ulti_lehet = False
+        self.csendes_duri_lehet = False
 
 class Szines(Alapjatek):
     def __init__(self, players, lrw):
@@ -587,6 +592,7 @@ class Passz(Szines):
 
     # csendes duri
     def evaluate_csendes_duri(self, points):
+        print("evaluate csendes duri")
         if len(self.players[self.vedok[0]].discard) == 0 and len(self.players[self.vedok[1]].discard) == 0:
             print("csendes duri")
             self.players[self.vallalo].points += points * 2
@@ -597,6 +603,7 @@ class Passz(Szines):
     # csendes ulti
     # az első, hogy volt-e próbálkozás, a második, hogy sikerült-e, a harmadik, hogy kinek
     def evaluate_csendes_ulti(self, points):
+        print("evaluate csendes ulti")
         colors = {
             "zold": "Zöld",
             "makk": "Makk",
@@ -632,10 +639,11 @@ class Passz(Szines):
 
 
     def evaluate_csendes_szaz(self, vedo_points, vallalo_points, points):
+        print("evaluate csendes 100")
         if vallalo_points >= 100:
             print("vállaló csendes száz")
             self.csendes_szaz = True
-            self.players[self.vallalo].points += 2* points
+            self.players[self.vallalo].points += 2 * points
             for n in self.vedok:
                 self.players[n].points -= points
 
@@ -643,7 +651,7 @@ class Passz(Szines):
         elif vedo_points >= 100:
             print("védő csendes száz")
             self.csendes_szaz = True
-            self.players[self.vallalo].points -= 2* points
+            self.players[self.vallalo].points -= 2 * points
             for n in self.vedok:
                 self.players[n].points += points
 
@@ -677,6 +685,7 @@ class NegyvenSzaz(Szines):
         self.jatek_lista = ["Negyven-száz"]
         self.csendes_ulti_lehet = True
         self.csendes_duri_lehet = True
+        self.csendes_szaz_lehet = False
         self.csendes_ulti = [False, False, int()]
         self.csendes_duri = False
         self.has_40_at_start = False
@@ -811,7 +820,7 @@ class Betli(Szintelen):
         self.points = 5
         self.can_be_lost = True
         self.vanHuszNegyven = False
-        self.name = "Ulti"
+        self.name = "Betli"
         self.jatekok = {"Betli": [False, 0]
                         }
         self.jatek_lista = ["Betli"]
@@ -900,11 +909,10 @@ class Durchmarsch(Szines):
 
 
     def is_game_lost(self):
-        lost = False
         for i in self.vedok:
             if len(self.players[i].discard) != 0:
-                lost = True
-        return lost
+                return True
+        return False
 
 class SzintelenDurchmarsch(Szintelen):
     def __init__(self, players, lrw):
@@ -972,6 +980,7 @@ class NegyvenSzazUlti(Ulti):
         self.jatek_lista = ["Negyven-száz", "Ulti"]
         self.csendes_ulti_lehet = False
         self.csendes_duri_lehet = True
+        self.csendes_szaz_lehet = False
         self.csendes_duri = False
         self.has_40_at_start = False
         for j in self.jatekok.keys():
@@ -1169,6 +1178,7 @@ class PirosDurschmarsch(Durchmarsch):
         self.name = "Durchmarsch"
         self.jatekok = {"Durchmarsch": [False, 0]}
         self.jatek_lista = ["Durchmarsch"]
+        self.csendes_szaz_lehet = True
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1186,6 +1196,8 @@ class NegyvenSzazUltiDurchmarsch(Ulti):
                         "Ulti": [False, 0],
                         "Durchmarsch" : [False, 0]}
         self.jatek_lista = ["Negyven-száz", "Ulti", "Durchmarsch"]
+        self.csendes_szaz_lehet = False
+        self.csendes_duri_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1204,6 +1216,7 @@ class HuszSzazDurchmarsch(HuszSzaz):
                         "Durchmarsch": [False, 0]}
         self.jatek_lista = ["Húsz-száz", "Durchmarsch"]
         self.csendes_ulti = [False, False, int()]
+        self.csendes_duri_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1224,6 +1237,7 @@ class PirosNegyvenSzazUlti(Ulti):
                         "Ulti": [False, 0]
                         }
         self.jatek_lista = ["Negyven-száz", "Ulti"]
+        self.csendes_szaz_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1257,6 +1271,8 @@ class HuszSzazUltiDurchmarsch(Ulti):
                         "Durchmarsch": [False, 0]
                         }
         self.jatek_lista = ["Húsz-száz", "Ulti", "Durchmarsch"]
+        self.csendes_szaz_lehet = False
+        self.csendes_duri_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1275,6 +1291,7 @@ class PirosNegyvenSzazDurchmarsch(NegyvenSzaz):
                         "Durchmarsch" : [False, 0]
                         }
         self.jatek_lista = ["Negyven-száz", "Durchmarsch"]
+        self.csendes_duri_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1293,6 +1310,7 @@ class PirosUltiDurchmarsch(Ulti):
                         "Durchmarsch": [False, 0]
                         }
         self.jatek_lista = ["Ulti", "Durchmarsch"]
+        self.csendes_duri_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1324,6 +1342,7 @@ class PirosHuszSzazUlti(HuszSzaz):
                         }
         self.jatek_lista = ["Húsz-száz", "Ulti"]
         self.adu = 'piros'
+        self.csendes_ulti_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1339,6 +1358,7 @@ class TeritettDurchmarsch(Szines):
         self.jatekok = {"Durchmarsch": [False, 0]}
         self.jatek_lista = ["Durchmarsch"]
         self.teritett = True
+        self.csendes_ulti_lehet = True
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1369,6 +1389,8 @@ class PirosNegyvenSzazUltiDurchmarsch(Ulti):
                         }
         self.jatek_lista = ["Negyven-száz", "Ulti", "Durchmarsch"]
         self.adu = 'piros'
+        self.csendes_szaz_lehet = False
+        self.csendes_duri_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1386,6 +1408,7 @@ class PirosHuszSzazDurchmarsch(HuszSzazDurchmarsch):
                         }
         self.jatek_lista = ["Húsz-száz", "Durchmarsch"]
         self.adu = 'piros'
+        self.csendes_duri_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1403,6 +1426,7 @@ class TeritettNegyvenSzazDurchmarsch(NegyvenSzaz):
                         }
         self.jatek_lista = ["Negyven-száz", "Durchmarsch"]
         self.teritett = True
+        self.csendes_duri_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1420,6 +1444,8 @@ class TeritettUltiDurchMarsch(Ulti):
                         }
         self.jatek_lista = ["Ulti", "Durchmarsch"]
         self.teritett = True
+        self.csendes_szaz_lehet = True
+        self.csendes_duri_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1437,6 +1463,8 @@ class TeritettNegyvenSzazUltiDurchmarsch(NegyvenSzaz):
                         }
         self.jatek_lista = ["Negyven-száz", "Ulti", "Durchmarsch"]
         self.teritett = True
+        self.csendes_duri_lehet = False
+        self.csendes_ulti_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1455,6 +1483,7 @@ class TeritettPirosNegyvenSzazDurchmarsch(NegyvenSzaz):
                         }
         self.jatek_lista = ["Negyven-száz", "Durchmarsch"]
         self.teritett = True
+        self.csendes_duri_lehet = False
         self.adu = 'piros'
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
@@ -1473,6 +1502,7 @@ class TeritettHuszSzazDurchmarsch(HuszSzaz):
                         }
         self.jatek_lista = ["Húsz-száz", "Durchmarsch"]
         self.teritett = True
+        self.csendes_szaz_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1490,6 +1520,8 @@ class PirosUltiDurchmarschHuszSzaz(Ulti):
                         }
         self.jatek_lista = ["Ulti", "Húsz-száz", "Durchmarsch"]
         self.adu = 'piros'
+        self.csendes_szaz_lehet = False
+        self.csendes_duri_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1497,6 +1529,26 @@ class PirosUltiDurchmarschHuszSzaz(Ulti):
         Ulti.evaluate_ulti(self, 8)
         HuszSzaz.evaluate_husz_szaz(self, 16)
         Durchmarsch.evaluate_durchmarsch(self, 12)
+
+
+class PirosTeritettUltiDurchmarsch(Ulti):
+    def __init__(self, players, lrw):
+        super().__init__(players, lrw)
+        self.name = "Terített Ulti Durchmarsch"
+        self.jatekok = {"Ulti": [False, 0],
+                        "Durchmarsch": [False, 0]
+                        }
+        self.jatek_lista = ["Ulti", "Durchmarsch"]
+        self.teritett = True
+        self.csendes_duri_lehet = False
+        self.csendes_ulti_lehet = False
+        for j in self.jatekok.keys():
+            self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
+
+    def evaluate(self):
+        Ulti.evaluate_ulti(self, 8)
+        Durchmarsch.evaluate_durchmarsch(self, 24)
+        Passz.evaluate_csendes_szaz(4)
 
 class TeritettUltiDurchmarschHuszSzaz(Ulti):
     def __init__(self, players, lrw):
@@ -1508,6 +1560,7 @@ class TeritettUltiDurchmarschHuszSzaz(Ulti):
                         }
         self.jatek_lista = ["Ulti", "Húsz-száz", "Durchmarsch"]
         self.teritett = True
+        self.csendes_szaz_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1528,6 +1581,8 @@ class PirosTeritettNegyvenSzazUltiDurchmarsch(NegyvenSzaz):
         self.jatek_lista = ["Negyven-száz", "Ulti", "Durchmarsch"]
         self.adu = 'piros'
         self.teritett = True
+        self.csendes_duri_lehet = False
+        self.csendes_ulti_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1547,6 +1602,7 @@ class PirosTeritettDurchmarschHuszSzaz(HuszSzaz):
         self.jatek_lista = ["Húsz-száz", "Durchmarsch"]
         self.adu = 'piros'
         self.teritett = True
+        self.csendes_duri_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 
@@ -1566,6 +1622,8 @@ class PirosTeritettUltiDurchmarschHuszSzaz(Ulti):
         self.jatek_lista = ["Húsz-száz", "Ulti", "Durchmarsch"]
         self.adu = 'piros'
         self.teritett = True
+        self.csendes_szaz_lehet = False
+        self.csendes_duri_lehet = False
         for j in self.jatekok.keys():
             self.kontra.update({j : copy.deepcopy(self.kontra_alap)})
 

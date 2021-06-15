@@ -6,6 +6,7 @@ from game_elements import *
 from game import Game
 import time
 import struct
+import traceback
 
 
 
@@ -13,9 +14,10 @@ import struct
 
 
 
-def threaded_client(conn, p, game):
+def threaded_client(conn, p, ip, game):
     conn.send(str.encode(str(p)))
-    game.add_player(Player(p))
+    # if game.get_player_number_from_ip(ip) == None:
+    game.add_player(Player(p, ip))
 
     while True:
         try:
@@ -97,9 +99,14 @@ def threaded_client(conn, p, game):
 
 
                 except:
-                    e = sys.exc_info()
                     print("data was: ", data, type(data))
-                    print("server error in incoming string message handling ", e)
+                    print("server error in incoming string message handling ")
+                    stack = traceback.extract_stack()
+                    (filename, line, procname, text) = stack[-1]
+                    print("procname: ", procname)
+                    print("filename: ", filename)
+                    print("line", line)
+                    print("text: ", text)
                     break
 
             elif recv_data_id == 1:
@@ -113,9 +120,14 @@ def threaded_client(conn, p, game):
 
 
                 except:
-                    e = sys.exc_info()
                     print("data was: ", data, type(data))
-                    print("server error in incoming object message handling ", e)
+                    print("server error in incoming object message handling ")
+                    stack = traceback.extract_stack()
+                    (filename, line, procname, text) = stack[-1]
+                    print("procname: ", procname)
+                    print("filename: ", filename)
+                    print("line", line)
+                    print("text: ", text)
                     break
 
 
@@ -125,8 +137,12 @@ def threaded_client(conn, p, game):
             conn.sendall(serialized_payload)
 
         except:
-            e = sys.exc_info()
-            print(e)
+            stack = traceback.extract_stack()
+            (filename, line, procname, text) = stack[-1]
+            print("procname: ", procname)
+            print("filename: ", filename)
+            print("line", line)
+            print("text: ", text)
             break
 
     print("Lost connection")
@@ -198,44 +214,44 @@ def server(password = 'pirosulti'):
     while True:
         if len(game.players) < 3:
             conn, addr = s.accept()
-            if addr[0] not in connected_clients:
-                connected_clients.append([addr[0], idCount])
-                print(connected_clients)
+            # if addr[0] not in connected_clients:
+            connected_clients.append([addr[0], idCount])
+            print(connected_clients)
 
-                result = conn.recv(4096).decode()
-                print("password should have been received: ", result)
-                if result != password:
-                    conn.send(str.encode('authentication failed'))
-                    conn.close()
-                else:
-                    conn.sendall(str.encode('authenticated'))
-
-                    print("Connected to:", addr)
-
-                    idCount += 1
-                    p = 0
-
-                    client_thread = threading.Thread(target = threaded_client, args = (conn, currentPlayer, game))
-                    client_thread.start()
-                    currentPlayer += 1
-            #TODO ezt vhogy le kéne tesztelni...
+            result = conn.recv(4096).decode()
+            print("password should have been received: ", result)
+            if result != password:
+                conn.send(str.encode('authentication failed'))
+                conn.close()
             else:
-                result = conn.recv(4096).decode()
-                print("password should have been received: ", result)
-                if result != password:
-                    conn.send(str.encode('authentication failed'))
-                    conn.close()
-                else:
-                    conn.sendall(str.encode('authenticated'))
+                conn.sendall(str.encode('authenticated'))
 
-                    print("Connected to:", addr)
+                print("Connected to:", addr)
 
-                    user_id = int()
-                    for element in connected_clients:
-                        if addr[0] in element:
-                            user_id = element[1]
-                    client_thread = threading.Thread(target=threaded_client, args=(conn, user_id, game))
-                    client_thread.start()
+                idCount += 1
+                p = 0
+
+                client_thread = threading.Thread(target = threaded_client, args = (conn, currentPlayer, addr[0], game))
+                client_thread.start()
+                currentPlayer += 1
+            #TODO ezt vhogy le kéne tesztelni...
+            # else:
+            #     result = conn.recv(4096).decode()
+            #     print("password should have been received: ", result)
+            #     if result != password:
+            #         conn.send(str.encode('authentication failed'))
+            #         conn.close()
+            #     else:
+            #         conn.sendall(str.encode('authenticated'))
+            #
+            #         print("Connected to:", addr)
+            #
+            #         user_id = int()
+            #         for element in connected_clients:
+            #             if addr[0] in element:
+            #                 user_id = element[1]
+            #         client_thread = threading.Thread(target=threaded_client, args=(conn, game.get_player_number_from_ip(connected_clients[-1][0]), connected_clients[-1][0], game))
+            #         client_thread.start()
 
 
 # server()

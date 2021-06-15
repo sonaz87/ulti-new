@@ -1,6 +1,7 @@
 import socket
 import pickle
 import struct
+import traceback
 
 
 class Network(object):

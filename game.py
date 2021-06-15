@@ -6,6 +6,7 @@ import copy
 import time
 import sys
 import csv
+import traceback
 
 STARTED = 'started'
 INIT = 'init'
@@ -64,7 +65,7 @@ class Game(object):
             'Terített ulti durchmarsch' : [26, TeritettUltiDurchMarsch(self.players, self.last_round_won)],
             'Terített negyven-száz ulti durchmarsch' : [27, TeritettNegyvenSzazUltiDurchmarsch(self.players, self.last_round_won)],
             'Terített piros negyven-száz durchmarsch' : [28, TeritettPirosNegyvenSzazDurchmarsch(self.players, self.last_round_won)],
-            'Terített piros ulti durchmarsch' : [28, PirosTeritettNegyvenSzazUltiDurchmarsch(self.players, self.last_round_won)],
+            'Terített piros ulti durchmarsch' : [28, PirosTeritettUltiDurchmarsch(self.players, self.last_round_won)], # TODO! itt valami nem stimmel
             'Terített húsz-száz durchmarsch' : [28, TeritettHuszSzazDurchmarsch(self.players, self.last_round_won)],
             'Piros ulti durchmarsch húsz-száz' : [29, PirosUltiDurchmarschHuszSzaz(self.players, self.last_round_won)],
             'Terített ulti durchmarsch húsz-száz' : [29, TeritettUltiDurchmarschHuszSzaz(self.players, self.last_round_won)],
@@ -94,6 +95,12 @@ class Game(object):
 
     def add_player(self, player):
         self.players.append(player)
+
+    def get_player_number_from_ip(self, ip):
+        for p in self.players:
+            if p.ip == ip:
+                return self.players.index(p)
+        return None
 
     def initialize(self):
         self.game_phase = BIDDING
@@ -242,6 +249,7 @@ class Game(object):
                 self.players[x].hand.remove(self.players[x].selected_cards[0])
                 self.players[x].selected_cards.clear()
                 self.cards_on_the_table.append([self.players[x].card_played, x])
+                self.new_popup(self.players[x].name + ": " + str(self.players[x].card_played))
                 self.players[x].is_active = False
                 if len(self.cards_on_the_table) < 3:
                     self.players[x - 1].is_active = True
@@ -253,8 +261,12 @@ class Game(object):
             self.remove_discards_from_hand()
         except:
             print("error in game.play_card")
-            e = sys.exc_info()
-            print(e)
+            stack = traceback.extract_stack()
+            (filename, line, procname, text) = stack[-1]
+            print("procname: ", procname)
+            print("filename: ", filename)
+            print("line", line)
+            print("text: ", text)
             pass
 
     def get_active_player_index(self):
@@ -262,7 +274,7 @@ class Game(object):
         for p in self.players:
             if p.is_active:
                 index.append(self.players.index(p))
-        print(" [*] in get_active_player_index: ", 0, self.players[0].is_active, 1, self.players[1].is_active, 2, self.players[2].is_active)
+        # print(" [*] in get_active_player_index: ", 0, self.players[0].is_active, 1, self.players[1].is_active, 2, self.players[2].is_active)
         if len(index) == 1:
             return index[0]
         else:
@@ -278,8 +290,7 @@ class Game(object):
                 self.players[x-1].is_active = True
 
 
-            print(" [*] in get_active_player_index after fix: ", 0, self.players[0].is_active, 1, self.players[1].is_active, 2,
-                  self.players[2].is_active)
+            # print(" [*] in get_active_player_index after fix: ", 0, self.players[0].is_active, 1, self.players[1].is_active, 2,self.players[2].is_active)
             return x
 
 
@@ -408,9 +419,13 @@ class Game(object):
 
         if hasattr(self.selected_game, 'can_be_lost'):
             if self.selected_game.can_be_lost:
+                print("game can be lost instantly")
                 if self.selected_game.is_game_lost():
+                    print("game is lost")
                     self.game_phase = END
+                    print("evaluate")
                     self.selected_game.evaluate()
+                    print("display results")
                     self.display_results()
 
     def getHuszNegyven(self, adu):
@@ -491,10 +506,10 @@ class Game(object):
             p.discard.clear()
             p.card_played = None
             p.selected_cards.clear()
-            self.wants_to_bid = False
-            self.licit_selected = None
-            self.adu_selected = None
-            self.ready_for_next_round = False
+            p.wants_to_bid = False
+            p.licit_selected = None
+            p.adu_selected = None
+            p.ready_for_next_round = False
 
         self.initialize()
 

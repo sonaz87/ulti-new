@@ -4,6 +4,7 @@ import pickle
 from network import Network
 from game_elements import *
 from pygame.locals import *
+import traceback
 
 
 
@@ -69,6 +70,7 @@ def redrawWindow(DISPLAYSURF, game, player):
     global cancelKontraButton
     global startOverButton
     global textRectObj
+    global selected_cards_local
 
     # colors
 
@@ -91,6 +93,8 @@ def redrawWindow(DISPLAYSURF, game, player):
     fontObjLicit = pygame.font.Font('C:/Windows/Fonts/Calibri.ttf', 18)
     fontObj3.set_bold(True)
     fontObjLicit.bold
+
+    cardBackSideImg = pygame.image.load(r'./images/playing-card-back-side.jpg')
 
     # test button
 
@@ -211,7 +215,7 @@ def redrawWindow(DISPLAYSURF, game, player):
     if len(cards_to_display) > 0:
         displacement = 50
         for i in range(len(cards_to_display)):
-            if cards_to_display[i][2] in game.players[player].selected_cards:
+            if cards_to_display[i][2] in selected_cards_local:
                 cards_to_display[i][1].bottom = 840
             else:
                 cards_to_display[i][1].bottom = 890
@@ -224,6 +228,20 @@ def redrawWindow(DISPLAYSURF, game, player):
 
     # game display objects
     if game.game_phase == BIDDING:
+
+        try:
+            displacement = 620
+            for i in range(len(game.talon)):
+                cardBackSideRect = cardBackSideImg.get_rect()
+                cardBackSideRect.left = (displacement)
+                cardBackSideRect.top = (275)
+                DISPLAYSURF.blit(cardBackSideImg, cardBackSideRect)
+                displacement += 50
+
+        except:
+            pass
+
+
 
         try:
             gameDetailSurf = fontObj.render(game.players[int(game.vallalo)].name + " - " + game.current_game, True, WHITE)
@@ -260,7 +278,7 @@ def redrawWindow(DISPLAYSURF, game, player):
                     DISPLAYSURF.blit(element[0], element[1])
                     licit_displacement += 18
 
-                if game.players[player].licit_selected != None and len(game.players[player].selected_cards) == 2:
+                if game.players[player].licit_selected != None and len(selected_cards_local) == 2:
                     licitConfirmButton = pygame.draw.rect(DISPLAYSURF, DARK_GREY, licitConfirmButtonRect)
                     DISPLAYSURF.blit(licitConfirmButtonSurf, licitConfirmButtonRect)
 
@@ -284,6 +302,13 @@ def redrawWindow(DISPLAYSURF, game, player):
                 gameDetailRect = gameDetailSurf.get_rect()
                 gameDetailRect.center = (700, 30)
                 DISPLAYSURF.blit(gameDetailSurf, gameDetailRect)
+            try:
+                nextPlayerSurf = fontObj.render(game.players[game.get_active_player_index()].name  + " jön", True, WHITE)
+                nextPlayerRect = nextPlayerSurf.get_rect()
+                nextPlayerRect.center = (700, 60)
+                DISPLAYSURF.blit(nextPlayerSurf, nextPlayerRect)
+            except:
+                pass
 
         except:
             pass
@@ -302,16 +327,13 @@ def redrawWindow(DISPLAYSURF, game, player):
                     displacement += 80
 
         except:
-            print("error in displaying terített")
-            e = sys.exc_info()
-            print(e)
             pass
 
 
         if game.players[player].is_active:
             try:
-                if len(game.players[player].selected_cards) > 0:
-                    if game.selected_game.is_valid_choice(game.cards_on_the_table, game.players[player].selected_cards[0], game.players[player].hand):
+                if len(selected_cards_local) > 0:
+                    if game.selected_game.is_valid_choice(game.cards_on_the_table, selected_cards_local[0], game.players[player].hand):
                         playCardConfirmButton = pygame.draw.rect(DISPLAYSURF, GREY, playCardConfirmButtonRect)
                         DISPLAYSURF.blit(playCardConfirmButtonSurf, playCardConfirmButtonRect)
             except:
@@ -325,18 +347,18 @@ def redrawWindow(DISPLAYSURF, game, player):
                     adu_box = pygame.draw.rect(DISPLAYSURF, LIGHT_GREY, (600, 150, 200, 200))
                     aduTitleSurf = fontObj.render('Válassz adut!', True, WHITE)
                     adutTitleRect = aduTitleSurf.get_rect()
-                    aduZoldSurf = fontObj2.render('Zöld', True, WHITE if game.players[player].adu_selected != 'zold' else RED)
+                    aduZoldSurf = fontObj.render('Zöld', True, BLACK if game.players[player].adu_selected != 'zold' else RED)
                     aduZoldRect = aduZoldSurf.get_rect()
-                    aduMakkSurf = fontObj2.render('Makk', True,
-                                                  WHITE if game.players[player].adu_selected != 'makk' else RED)
+                    aduMakkSurf = fontObj.render('Makk', True,
+                                                  BLACK if game.players[player].adu_selected != 'makk' else RED)
                     aduMakkRect = aduZoldSurf.get_rect()
-                    aduTokSurf = fontObj2.render('Tök', True,
-                                                  WHITE if game.players[player].adu_selected != 'tok' else RED)
+                    aduTokSurf = fontObj.render('Tök', True,
+                                                  BLACK if game.players[player].adu_selected != 'tok' else RED)
                     aduTokRect = aduZoldSurf.get_rect()
                     adutTitleRect.center = (700, 210)
                     aduZoldRect.center = (700, 240)
-                    aduMakkRect.center = (700, 260)
-                    aduTokRect.center = (700, 280)
+                    aduMakkRect.center = (700, 270)
+                    aduTokRect.center = (700, 3000)
 
                     aduConfirmSurf = fontObj.render("OK", True, WHITE)
                     aduConfrimRect = aduConfirmSurf.get_rect()
@@ -398,14 +420,14 @@ def redrawWindow(DISPLAYSURF, game, player):
                             kontraSurfs.append(fontObj3.render('Parti' if g == 'Passz' else g, True, BLACK))
                             kontraRects.append(kontraSurfs[-1].get_rect())
 
-                        pygame.draw.rect(DISPLAYSURF, LIGHT_GREY, (1100, 200, 200, 400))
+                        pygame.draw.rect(DISPLAYSURF, LIGHT_GREY, (950, 200, 300, 400))
                         displacement = 250
                         for i in range(len(kontraSurfs)):
-                            kontraRects[i].right = 1180
+                            kontraRects[i].right = 1080
                             kontraRects[i].top = displacement
                             DISPLAYSURF.blit(kontraSurfs[i], kontraRects[i])
                             confirmRect = okSurf.get_rect()
-                            confirmRect.left = 1220
+                            confirmRect.left = 1120
                             confirmRect.top = displacement
                             kontraConfirms.append(pygame.draw.rect(DISPLAYSURF, DARK_GREY, confirmRect))
                             DISPLAYSURF.blit(okSurf, confirmRect)
@@ -413,7 +435,7 @@ def redrawWindow(DISPLAYSURF, game, player):
 
                         cancelkontraSurf = fontObj.render("Bezárás", True, WHITE)
                         cancelkontraRect = cancelkontraSurf.get_rect()
-                        cancelkontraRect.center = (1200, 530)
+                        cancelkontraRect.center = (1100, 530)
                         cancelKontraButton = pygame.draw.rect(DISPLAYSURF, DARK_GREY, cancelkontraRect)
                         DISPLAYSURF.blit(cancelkontraSurf, cancelkontraRect)
 
@@ -452,32 +474,32 @@ def redrawWindow(DISPLAYSURF, game, player):
             resultRects = []
             displacement = 200
             for key, value in game.selected_game.jatekok.items():
-                resultSurfs.append(fontObj.render(game.selected_game.kontra[key][0][0] + " " +  key + " - " + ("Nyerve" if value[0] else "Bukva"), True, BLACK))
+                resultSurfs.append(fontObj.render(game.selected_game.kontra[key][game.selected_game.jatekok[key][1]][0] + " " +  key + " - " + ("Nyerve" if value[0] else "Bukva"), True, BLACK))
                 resultRects.append(resultSurfs[-1].get_rect())
                 resultRects[-1].left = 300
                 resultRects[-1].top = displacement
                 DISPLAYSURF.blit(resultSurfs[-1], resultRects[-1])
                 displacement += 40
-            if hasattr(game.selected_game, 'csendes_szaz'):
+            if game.selected_game.csendes_szaz_lehet:
                 if game.selected_game.csendes_szaz:
-                    csendesSzazSurf = fontObj.render("Csendes száz sikerült", True, Black)
+                    csendesSzazSurf = fontObj.render("Csendes száz sikerült", True, BLACK)
                     csendesSzazRect = csendesSzazSurf.get_rect()
                     csendesSzazRect.left = 300
                     csendesSzazRect.top = displacement
                     DISPLAYSURF.blit(csendesSzazSurf, csendesSzazRect)
                     displacement += 40
-            if hasattr(game.selected_game, 'csendes_ulti'):
+            if game.selected_game.csendes_ulti_lehet:
                 if game.selected_game.csendes_ulti[0]:
-                    csendesUltiSurf = fontObj.render(game.players[game.selected_game.csendes_ulti[2]].name + " - Csendes ulti ", + ('sikerült' if game.selected_game.csendes_ulti[1] else 'bukva'), True, Black)
+                    csendesUltiSurf = fontObj.render(game.players[game.selected_game.csendes_ulti[2]].name + " - Csendes ulti ", + ('sikerült' if game.selected_game.csendes_ulti[1] else 'bukva'), True, BLACK)
                     csendesUltiRect = csendesSzazSurf.get_rect()
                     csendesUltiRect.left = 300
                     csendesUltiRect.top = displacement
                     DISPLAYSURF.blit(csendesUltiSurf, csendesUltiRect)
                     displacement += 40
 
-            if hasattr(game.selected_game, 'csendes_duri'):
+            if game.selected_game.csendes_duri_lehet:
                 if game.selected_game.csendes_duri:
-                    csendesDuriSurf = fontObj.render("Csendes durchmarsch sikerült", True, Black)
+                    csendesDuriSurf = fontObj.render("Csendes durchmarsch sikerült", True, BLACK)
                     csendesDuriRect = csendesDuriSurf.get_rect()
                     csendesDuriRect.left = 300
                     csendesDuriRect.top = displacement
@@ -518,6 +540,7 @@ def client(name_in, server_ip, password):
     global SZINTELEN
     global PLAY
     global END
+    global selected_cards_local
 
     # pygame inits:
     pygame.font.init()
@@ -541,8 +564,7 @@ def client(name_in, server_ip, password):
     PLAY = 'play'
     END = 'end'
 
-
-
+    selected_cards_local = []
     display_kontra = False
     client_animation_completed = False
     run = True
@@ -557,6 +579,8 @@ def client(name_in, server_ip, password):
     game = n.send(data, 0)
 
     if game.players[player].name != name_in:
+        print("eddig megy:")
+        print("name_in, server_ip, password:", name_in, server_ip, password)
         data = pickle.dumps("name:" + str(player) + ":" + str(name_in))
         game = n.send(data, 0)
 
@@ -577,40 +601,56 @@ def client(name_in, server_ip, password):
         # redrawWindow(DISPLAYSURF, game, player)
         # defining starting and ending playes for played cards
         try:
-            if game.players[0].card_played == None:
-                if player == 0:
-                    p0PlayedCardStartPos = (700, 750)
-                    p0PlayedCardEndPos = (700, 450)
-                elif player == 1:
-                    p0PlayedCardStartPos = (80, 130)
-                    p0PlayedCardEndPos = (600, 400)
-                elif player == 2:
-                    p0PlayedCardStartPos = (1310, 130)
-                    p0PlayedCardEndPos = (800, 400)
-
-            if game.players[1].card_played == None:
-                if player == 0:
-                    p1PlayedCardStartPos = (1310, 130)
-                    p1PlayedCardEndPos = (800, 400)
-                elif player == 1:
-                    p1PlayedCardStartPos = (700, 750)
-                    p1PlayedCardEndPos = (700, 450)
-                elif player == 2:
-                    p1PlayedCardStartPos = (80, 130)
-                    p1PlayedCardEndPos = (600, 400)
-
-            if game.players[2].card_played == None:
-                if player == 0:
-                    p2PlayedCardStartPos = (80, 130)
-                    p2PlayedCardEndPos = (600, 400)
-                elif player == 1:
-                    p2PlayedCardStartPos = (1310, 130)
-                    p2PlayedCardEndPos = (800, 400)
-                elif player == 2:
-                    p2PlayedCardStartPos = (700, 750)
-                    p2PlayedCardEndPos = (700, 450)
+            if player == 0:
+                p0PlayedCardEndPos = (700, 450)
+                p1PlayedCardEndPos = (650, 400)
+                p2PlayedCardEndPos = (750, 400)
+            elif player == 1:
+                p0PlayedCardEndPos = (750, 400)
+                p1PlayedCardEndPos = (700, 450)
+                p2PlayedCardEndPos = (650, 400)
+            elif player == 2:
+                p0PlayedCardEndPos = (650, 400)
+                p1PlayedCardEndPos = (750, 400)
+                p2PlayedCardEndPos = (700, 450)
         except:
             pass
+
+        # try:
+        #     if game.players[0].card_played == None:
+        #         if player == 0:
+        #             p0PlayedCardStartPos = (700, 750)
+        #             p0PlayedCardEndPos = (700, 450)
+        #         elif player == 1:
+        #             p1PlayedCardStartPos = (80, 130)
+        #             p1PlayedCardEndPos = (600, 400)
+        #         elif player == 2:
+        #             p2PlayedCardStartPos = (1310, 130)
+        #             p2PlayedCardEndPos = (800, 400)
+        #
+        #     if game.players[1].card_played == None:
+        #         if player == 0:
+        #             p0PlayedCardStartPos = (1310, 130)
+        #             p0PlayedCardEndPos = (800, 400)
+        #         elif player == 1:
+        #             p1PlayedCardStartPos = (700, 750)
+        #             p1PlayedCardEndPos = (700, 450)
+        #         elif player == 2:
+        #             p2PlayedCardStartPos = (80, 130)
+        #             p2PlayedCardEndPos = (600, 400)
+        #
+        #     if game.players[2].card_played == None:
+        #         if player == 0:
+        #             p0PlayedCardStartPos = (80, 130)
+        #             p0PlayedCardEndPos = (600, 400)
+        #         elif player == 1:
+        #             p1PlayedCardStartPos = (1310, 130)
+        #             p1PlayedCardEndPos = (800, 400)
+        #         elif player == 2:
+        #             p2PlayedCardStartPos = (700, 750)
+        #             p2PlayedCardEndPos = (700, 450)
+        # except:
+        #     pass
 
 
         mouseClicked = False
@@ -661,30 +701,30 @@ def client(name_in, server_ip, password):
                             card_select_list.pop(0)
 
                     if len(card_select_list) != 0:
-                        if game.players[player].hand[card_select_list[0]] in game.players[player].selected_cards:
-                            game.players[player].selected_cards.remove(game.players[player].hand[card_select_list[0]])
+                        if game.players[player].hand[card_select_list[0]] in selected_cards_local:
+                            selected_cards_local.remove(game.players[player].hand[card_select_list[0]])
                         else:
                             # in bidding phase, let player select 2 cards
                             if game.game_phase == BIDDING:
-                                if len(game.players[player].selected_cards) < 2:
-                                    if game.players[player].hand[card_select_list[0]] not in game.players[player].selected_cards:
-                                        game.players[player].selected_cards.append(game.players[player].hand[card_select_list[0]])
-                                if len(game.players[player].selected_cards) == 2:
-                                    if game.players[player].hand[card_select_list[0]] not in game.players[player].selected_cards:
-                                        game.players[player].selected_cards.pop(0)
-                                        game.players[player].selected_cards.append(game.players[player].hand[card_select_list[0]])
+                                if len(selected_cards_local) < 2:
+                                    if game.players[player].hand[card_select_list[0]] not in selected_cards_local:
+                                        selected_cards_local.append(game.players[player].hand[card_select_list[0]])
+                                if len(selected_cards_local) == 2:
+                                    if game.players[player].hand[card_select_list[0]] not in selected_cards_local:
+                                        selected_cards_local.pop(0)
+                                        selected_cards_local.append(game.players[player].hand[card_select_list[0]])
                             # in play phase let player select 1 card only
                             elif game.game_phase == PLAY:
-                                if len(game.players[player].selected_cards) < 1:
-                                    game.players[player].selected_cards.append(game.players[player].hand[card_select_list[0]])
-                                if len(game.players[player].selected_cards) == 1:
-                                    if game.players[player].hand[card_select_list[0]] not in game.players[player].selected_cards:
-                                        game.players[player].selected_cards.pop(0)
-                                        game.players[player].selected_cards.append(game.players[player].hand[card_select_list[0]])
+                                if len(selected_cards_local) < 1:
+                                    selected_cards_local.append(game.players[player].hand[card_select_list[0]])
+                                if len(selected_cards_local) == 1:
+                                    if game.players[player].hand[card_select_list[0]] not in selected_cards_local:
+                                        selected_cards_local.pop(0)
+                                        selected_cards_local.append(game.players[player].hand[card_select_list[0]])
 
-                    data = pickle.dumps(game.players[player])
-                    game = n.send(data, 1)
-                    game_updated = True
+                    # data = pickle.dumps(game.players[player])
+                    # game = n.send(data, 1)
+                    # game_updated = True
             except:
                 e = sys.exc_info()
                 print("error in card selection event handling")
@@ -699,6 +739,7 @@ def client(name_in, server_ip, password):
                         game = n.send(data, 0)
                         game_updated = True
                     if mouseClicked and passInBiddingButton.collidepoint(mousex, mousey):
+
                         data = pickle.dumps("passz")
                         game = n.send(data, 0)
                         game_updated = True
@@ -721,6 +762,10 @@ def client(name_in, server_ip, password):
                             game_updated = True
 
                     if mouseClicked and licitConfirmButton.collidepoint(mousex, mousey):
+                        game.players[player].selected_cards = selected_cards_local[:]
+                        selected_cards_local.clear()
+                        data = pickle.dumps(game.players[player])
+                        game = n.send(data, 1)
                         data = pickle.dumps("bid")
                         game = n.send(data, 0)
                         game_updated = True
@@ -735,9 +780,14 @@ def client(name_in, server_ip, password):
 
                 try:
                     if mouseClicked and playCardConfirmButton.collidepoint(mousex, mousey):
-                        data = pickle.dumps("card_was_played")
-                        game = n.send(data, 0)
-                        game_updated = True
+                        if game.selected_game.is_valid_choice(game.cards_on_the_table, selected_cards_local[0], game.players[player].hand):
+                            game.players[player].selected_cards = selected_cards_local[:]
+                            selected_cards_local.clear()
+                            data = pickle.dumps(game.players[player])
+                            game = n.send(data,1)
+                            data = pickle.dumps("card_was_played")
+                            game = n.send(data, 0)
+                            game_updated = True
                 except:
                     pass
 
