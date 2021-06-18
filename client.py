@@ -355,10 +355,10 @@ def redrawWindow(DISPLAYSURF, game, player):
                     aduTokSurf = fontObj.render('Tök', True,
                                                   BLACK if game.players[player].adu_selected != 'tok' else RED)
                     aduTokRect = aduZoldSurf.get_rect()
-                    adutTitleRect.center = (700, 210)
+                    adutTitleRect.center = (700, 190)
                     aduZoldRect.center = (700, 240)
                     aduMakkRect.center = (700, 270)
-                    aduTokRect.center = (700, 3000)
+                    aduTokRect.center = (700, 300)
 
                     aduConfirmSurf = fontObj.render("OK", True, WHITE)
                     aduConfrimRect = aduConfirmSurf.get_rect()
@@ -390,19 +390,21 @@ def redrawWindow(DISPLAYSURF, game, player):
 
             # kontrák
             try:
+                # only display kontra button if last kontra was made at most 2 moves ago and there is an available kontra to be done
                 is_kontra_available = False
-                for g in game.selected_game.kontra.keys():
-                    # print(" [*]  in kontra display, game.selected_game.kontra[g][game.selected_game.round -1]", game.selected_game.kontra[g][game.selected_game.round -1])
-                    if True in game.selected_game.kontra[g][game.selected_game.round -1]:
-                        # print("kontra available")
-                        is_kontra_available = True
-                if is_kontra_available == True and display_kontra == False and game.selected_game.round % 2 == 1 and player != game.selected_game.vallalo:
-                    kontraSurf = fontObj.render("Kontra", True, WHITE)
-                    kontraRect = kontraSurf.get_rect()
-                    kontraRect.center = (1200, 200)
-                    kontraButton = pygame.draw.rect(DISPLAYSURF, DARK_GREY, kontraRect)
-                    DISPLAYSURF.blit(kontraSurf, kontraRect)
-                elif is_kontra_available == True and display_kontra == False and game.selected_game.round % 2 == 0 and player == game.selected_game.vallalo:
+
+                if player in game.selected_game.vedok and game.selected_game.round == 1:
+                    for jatek in game.selected_game.jatek_lista:
+                        if False in game.selected_game.kontra[jatek][1]:
+                            is_kontra_available = True
+
+                if player == game.selected_game.vallalo and game.selected_game.round == 2:
+                    for jatek in game.selected_game.jatek_lista:
+                        if True in game.selected_game.kontra[jatek][1]:
+                            is_kontra_available = True
+
+
+                if is_kontra_available == True and display_kontra == False:
                     kontraSurf = fontObj.render("Kontra", True, WHITE)
                     kontraRect = kontraSurf.get_rect()
                     kontraRect.center = (1200, 200)
@@ -416,9 +418,18 @@ def redrawWindow(DISPLAYSURF, game, player):
                         kontraConfirms = []
                         okSurf = fontObj3.render("OK", True, WHITE)
 
-                        for g in game.selected_game.kontra.keys():
-                            kontraSurfs.append(fontObj3.render('Parti' if g == 'Passz' else g, True, BLACK))
-                            kontraRects.append(kontraSurfs[-1].get_rect())
+                        if player in game.selected_game.vedok:
+                            for g, value in game.selected_game.kontra.items():
+                                if False in game.selected_game.kontra[g][1]:
+                                    kontraSurfs.append(fontObj3.render('Parti' if g == 'Passz' else g, True, BLACK))
+                                    kontraRects.append(kontraSurfs[-1].get_rect())
+
+                        if player == game.selected_game.vallalo:
+                            for g, value in game.selected_game.kontra.items():
+                                if True in game.selected_game.kontra[g][1] and False in game.selected_game.kontra[g][2]:
+                                    kontraSurfs.append(fontObj3.render('Parti' if g == 'Passz' else g, True, BLACK))
+                                    kontraRects.append(kontraSurfs[-1].get_rect())
+
 
                         pygame.draw.rect(DISPLAYSURF, LIGHT_GREY, (950, 200, 300, 400))
                         displacement = 250

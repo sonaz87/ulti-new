@@ -26,6 +26,7 @@ class Game(object):
         self.bidding_list = ["", "", ""]
         self.current_game = 'No Game'
         self.vallalo = ""
+        self.cards_played_since_last_kontra = 0
         self.card_played = None
         self.cards_on_the_table = []
         self.last_round_won = None
@@ -65,7 +66,7 @@ class Game(object):
             'Terített ulti durchmarsch' : [26, TeritettUltiDurchMarsch(self.players, self.last_round_won)],
             'Terített negyven-száz ulti durchmarsch' : [27, TeritettNegyvenSzazUltiDurchmarsch(self.players, self.last_round_won)],
             'Terített piros negyven-száz durchmarsch' : [28, TeritettPirosNegyvenSzazDurchmarsch(self.players, self.last_round_won)],
-            'Terített piros ulti durchmarsch' : [28, PirosTeritettUltiDurchmarsch(self.players, self.last_round_won)], # TODO! itt valami nem stimmel
+            'Terített piros ulti durchmarsch' : [28, PirosTeritettUltiDurchmarsch(self.players, self.last_round_won)],
             'Terített húsz-száz durchmarsch' : [28, TeritettHuszSzazDurchmarsch(self.players, self.last_round_won)],
             'Piros ulti durchmarsch húsz-száz' : [29, PirosUltiDurchmarschHuszSzaz(self.players, self.last_round_won)],
             'Terített ulti durchmarsch húsz-száz' : [29, TeritettUltiDurchmarschHuszSzaz(self.players, self.last_round_won)],
@@ -104,15 +105,11 @@ class Game(object):
 
     def initialize(self):
         self.game_phase = BIDDING
-        print("game init")
+        print(" [*] game init started")
         self.deck.shuffle()
-        print("shuffle done")
         if self.players[0].is_dealer is False and self.players[1].is_dealer is False and self.players[2].is_dealer is False:
-            print("choosing dealer randomly")
             x = random.choice([0, 1, 2])
             self.players[x].is_dealer = True
-            print("isdealer set true: ", self.players[x].is_dealer)
-            print("x, player, player.isdealer", x, self.players[x].name, self.players[x].is_dealer)
         else:
             for i in range(3):
                 if self.players[i].is_dealer == True:
@@ -123,10 +120,10 @@ class Game(object):
         self.deal_hands()
         for p in self.players:
             p.sort_hand()
-        print("init done")
+        print(" [*] game init completed")
 
     def deal_hands(self):
-        print("in deal-hands")
+        print(" [*] deal_hands started")
         for p in self.players:
             p.is_active = False
         if self.players[0].is_dealer:
@@ -155,7 +152,7 @@ class Game(object):
             self.new_popup(str(self.players[1].name) + " kezd")
             self.players[2].set_hand(self.deck.cards[12:22])
             self.players[0].set_hand(self.deck.cards[22:32])
-        print("deal_hands done")
+        print(" [*] deal_hands completed")
         # active_counter = 0
         # for p in self.players:
         #     if p.is_active:
@@ -164,7 +161,7 @@ class Game(object):
 
 
     def accept_bid(self):
-        print("accept bid started")
+        print(" [*] acdept_bid started")
         p = self.get_active_player_index()
         self.current_game = self.players[p].licit_selected[:]
         self.bidding_list.pop(0)
@@ -182,10 +179,10 @@ class Game(object):
         self.players[p].licit_selected = None
         print(self.bidding_list)
         self.players[p-1].is_active = True
-
+        print(" [*] acdept_bid completed")
 
     def pickup(self):
-        print("pickup started")
+        print(" [*] pickup started")
         p = self.get_active_player_index()
         data = [self.players[p].hand, self.players[p].licit_selected]
         self.log_step("pickup.log", data)
@@ -196,10 +193,10 @@ class Game(object):
             self.players[p].selected_cards.append(c)
             self.players[p].sort_hand()
         self.talon.clear()
-        print("pickup completed")
+        print(" [*] pickup completed")
 
     def passz(self):
-        print("pass started")
+        print(" [*] passz started")
         p = self.get_active_player_index()
         self.bidding_list.pop(0)
         self.bidding_list.append("passz")
@@ -221,26 +218,26 @@ class Game(object):
         print(self.bidding_list)
 
         active_counter = 0
-        print("pass completed")
+        print(" [*] passz completed")
 
 
     def restart_because_no_bidding(self):
+
+        print(" [*] restart_because_no_bidding started")
         self.selected_game = 'No Game'
         self.game_phase = BIDDING
-        print("game init")
         self.deck.shuffle()
-        print("shuffle done")
         self.deal_hands()
         for p in self.players:
             p.sort_hand()
             p.licit_selected = None
-        print("passz reset done")
+        print(" [*] restart_because_no_bidding completed")
 
 
     def play_card(self):
+        print(" [*] play_card started")
         try:
             x = self.get_active_player_index()
-            print(" [*] in play_card:: active player index is :", x)
             if len(self.players[x].selected_cards) == 1 and self.players[x].card_played == None:
                 self.players[x].card_played = copy.deepcopy(self.players[x].selected_cards[0])
                 data = [self.players[x].hand, self.players[x].card_played, self.cards_on_the_table, self.selected_game]
@@ -254,11 +251,23 @@ class Game(object):
                 if len(self.cards_on_the_table) < 3:
                     self.players[x - 1].is_active = True
                     self.new_popup(str(self.players[x - 1].name) + " jön")
-                    print(" [*] in play_card: next active player set, player activeness at end of play_card: ", self.players[0].is_active,self.players[1].is_active, self.players[2].is_active )
-                print(" [*] in play_card: cards on the table: ", self.cards_on_the_table)
+                self.cards_played_since_last_kontra += 1
             else:
                 print(" [*] in play_card: active player selected and played cards: ", self.players[x].selected_cards, self.players[x].card_played)
             self.remove_discards_from_hand()
+
+            if x == self.selected_game.vedok[0]:
+                if self.selected_game.vedo1_kontra_possible and not self.selected_game.vedo1_kontra_was_done:
+                    self.selected_game.vedo1_kontra_possible = False
+            if x == self.selected_game.vedok[1]:
+                if self.selected_game.vedo2_kontra_possible and not self.selected_game.vedo2_kontra_was_done:
+                    self.selected_game.vedo2_kontra_possible = False
+            if x == self.selected_game.vallalo:
+                if self.selected_game.vallalo_kontra_possible and not (self.selected_game.vallalo_kontra_on_vedo1_was_done or self.selected_game.vallalo_kontra_on_vedo2_was_done):
+                    self.selected_game.vallalo_kontra_possible = False
+
+
+            print(" [*] play_card completed")
         except:
             print("error in game.play_card")
             stack = traceback.extract_stack()
@@ -295,24 +304,31 @@ class Game(object):
 
 
     def who_won_round(self):
+        print(" [*] who_won_round started")
         if issubclass(type(self.selected_game), Szines):
             adus = []
             for c in self.cards_on_the_table:
                 if c[0].color == self.selected_game.adu:
                     adus.append(c)
             if len(adus) == 1:
+                print(" [*] who_won_round completed")
                 return adus[0][1]
             elif len(adus) == 2:
                 if adus[0][0].bigger_than(adus[1][0], self.selected_game.number_values):
+                    print(" [*] who_won_round completed")
                     return adus[0][1]
                 else:
+                    print(" [*] who_won_round completed")
                     return adus[1][1]
             elif len(adus) == 3:
                 if adus[0][0].bigger_than(adus[1][0], self.selected_game.number_values) and adus[0][0].bigger_than(adus[2][0], self.selected_game.number_values):
+                    print(" [*] who_won_round completed")
                     return adus[0][1]
                 elif adus[1][0].bigger_than(adus[0][0], self.selected_game.number_values) and adus[1][0].bigger_than(adus[2][0], self.selected_game.number_values):
+                    print(" [*] who_won_round completed")
                     return adus[1][1]
                 else:
+                    print(" [*] who_won_round completed")
                     return adus[2][1]
             elif len(adus) == 0:
                 cards_to_consider = [self.cards_on_the_table[0]]
@@ -321,18 +337,24 @@ class Game(object):
                 if self.cards_on_the_table[2][0].color == self.cards_on_the_table[0][0].color:
                     cards_to_consider.append(self.cards_on_the_table[2])
                 if len(cards_to_consider) == 1:
+                    print(" [*] who_won_round completed")
                     return cards_to_consider[0][1]
                 elif len(cards_to_consider) == 2:
                     if cards_to_consider[0][0].bigger_than(cards_to_consider[1][0], self.selected_game.number_values):
+                        print(" [*] who_won_round completed")
                         return cards_to_consider[0][1]
                     else:
+                        print(" [*] who_won_round completed")
                         return cards_to_consider[1][1]
                 else:
                     if cards_to_consider[0][0].bigger_than(cards_to_consider[1][0], self.selected_game.number_values) and cards_to_consider[0][0].bigger_than(cards_to_consider[2][0], self.selected_game.number_values):
+                        print(" [*] who_won_round completed")
                         return cards_to_consider[0][1]
                     elif cards_to_consider[1][0].bigger_than(cards_to_consider[0][0], self.selected_game.number_values) and cards_to_consider[1][0].bigger_than(cards_to_consider[2][0], self.selected_game.number_values):
+                        print(" [*] who_won_round completed")
                         return cards_to_consider[1][1]
                     else:
+                        print(" [*] who_won_round completed")
                         return cards_to_consider[2][1]
 
 
@@ -343,24 +365,31 @@ class Game(object):
             if self.cards_on_the_table[2][0].color == self.cards_on_the_table[0][0].color:
                 cards_to_consider.append(self.cards_on_the_table[2])
             if len(cards_to_consider) == 1:
+                print(" [*] who_won_round completed")
                 return cards_to_consider[0][1]
             elif len(cards_to_consider) == 2:
                 if cards_to_consider[0][0].bigger_than(cards_to_consider[1][0], self.selected_game.number_values):
+                    print(" [*] who_won_round completed")
                     return cards_to_consider[0][1]
                 else:
+                    print(" [*] who_won_round completed")
                     return cards_to_consider[1][1]
             else:
                 if cards_to_consider[0][0].bigger_than(cards_to_consider[1][0], self.selected_game.number_values) and \
                         cards_to_consider[0][0].bigger_than(cards_to_consider[2][0], self.selected_game.number_values):
+                    print(" [*] who_won_round completed")
                     return cards_to_consider[0][1]
                 elif cards_to_consider[1][0].bigger_than(cards_to_consider[0][0], self.selected_game.number_values) and \
                         cards_to_consider[1][0].bigger_than(cards_to_consider[2][0], self.selected_game.number_values):
+                    print(" [*] who_won_round completed")
                     return cards_to_consider[1][1]
                 else:
+                    print(" [*] who_won_round completed")
                     return cards_to_consider[2][1]
 
 
     def remove_discards_from_hand(self):
+        print(" [*] remove_discards_from_hand started")
         discards = []
         for p in self.players:
             for this_round in p.discard:
@@ -374,25 +403,23 @@ class Game(object):
             for p in self.players:
                 if c in p.hand:
                     p.hand.remove(c)
+        print(" [*] remove_discards_from_hand started")
 
     def collect_played_cards(self):
         # megnézi, ki vitte, berakja a discardjába
         # ha van adu: a legnagyobb adu nyer
         # ha nincs: a legnagyobb alapszín nyer
-        print("[*] collect_played_cards starting")
+        print("[*] collect_played_cards started")
         for i in self.cards_on_the_table:
             for p in self.players:
                 if i[0] in p.hand:
                     p.hand.remove(i[0])
                 if i[0] in p.selected_cards:
                     p.selected_cards.remove(i[0])
-        print("[*] collect_played_cards : removed palyed cards from hands")
         x = self.who_won_round()
         self.new_popup(self.players[x].name + " vitte")
-        print(self.players[x].name + " has won this round")
         self.last_round_won = x
         self.players[x].discard.append(self.cards_on_the_table[:])
-        print("[*] collect_played_cards : played cards appeneded to winners discard")
         if self.selected_game.round == 10:
             print("[*] - collect_played_cards : round 10 trigger")
             self.selected_game.player_points[x] += 10
@@ -408,14 +435,9 @@ class Game(object):
         self.players[x].is_active = True
         self.cards_on_the_table.clear()
 
-        print("[*] collect_played_cards : resets done")
-
         self.remove_discards_from_hand()
-        print("[*] collect_played_cards : dicards after collect_played_cards")
         for p in self.players:
             print(p.name, p.discard)
-
-        print("[*] collect_played_cards : last step done")
 
         if hasattr(self.selected_game, 'can_be_lost'):
             if self.selected_game.can_be_lost:
@@ -427,8 +449,10 @@ class Game(object):
                     self.selected_game.evaluate()
                     print("display results")
                     self.display_results()
+        print("[*] collect_played_cards completed")
 
     def getHuszNegyven(self, adu):
+        print("[*] getHuszNegyven started")
         x = self.get_active_player_index()
         colordict = {
             'zold' : 'Zöld',
@@ -453,44 +477,74 @@ class Game(object):
         self.selected_game.bemondtak.append(x)
         for y in range(3):
             print("player ", y , " points: ", self.selected_game.player_points[y])
+        print("[*] getHuszNegyven completed")
+
+    def get_next_kontra(self, jatek):
+        for i in range(15):
+            if not self.selected_game.kontra[jatek][i][1] or not self.selected_game.kontra[jatek][i][2]:
+                return i
+
 
     def kontra(self, num):
+
+        print("[*] kontra started")
         num = int(num)
-        if self.selected_game.name not in ["Betli", "Rebetli", "Színtelen durchmarsch", "Redurchmarsch", "Terített betli", "Terített színtelen durchmarsch"]:
-            print(" [*] in game kontra()")
-            print("selected game.jatek_lista: , num", self.selected_game.jatek_lista, num)
-            jatek = self.selected_game.jatek_lista[num]
-            thisround = self.selected_game.round
-            print("selected game kontra: ", self.selected_game.kontra)
-            self.selected_game.kontra[jatek][thisround][1] = True
-            if self.get_active_player_index() != self.selected_game.vallalo:
-                self.selected_game.kontra[jatek][thisround][2] = True
+        print("selected_game.jatek_lista", self.selected_game.jatek_lista)
+        jatek = self.selected_game.jatek_lista[num]
+
+
+
+        if isinstance(self.selected_game, Szines):
+            print("színes játék")
+
+            if self.selected_game.round == 1:
+                print("2")
+                self.selected_game.kontra[jatek][1][1] = True
+                self.selected_game.kontra[jatek][1][2] = True
+                self.selected_game.jatekok[jatek][1] = 1
+
+            elif self.selected_game.round == 2:
+                print("3")
+                self.selected_game.kontra[jatek][2][1] = True
+                self.selected_game.kontra[jatek][2][2] = True
+                self.selected_game.jatekok[jatek][1] = 2
 
 
         else:
-            jatek = self.selected_game.jatek_lista[num]
-            thisround = self.selected_game.round
+            print("színtelen játék")
 
-            # self.selected_game.vedok = [0,1,2]
-            # self.selected_game.vedok.remove(self.selected_game.vallalo)
+            if self.selected_game.round == 1:
+                print('2')
+                x = self.get_active_player_index()
+                kontra_index = self.selected_game.vedok.index(x) + 1
+                self.selected_game.kontra[jatek][1][kontra_index] = True
+                self.selected_game.jatekok[jatek][1] = 1
 
-            self.selected_game.kontra[jatek][thisround][1] = True
-            if thisround % 2 == 1:
-                self.selected_game.kontra[jatek][thisround][self.selected_game.vedok.index(self.get_active_player_index())] = True
+            else:
+                print("3")
+                self.selected_game.kontra[jatek][2][1] = True
+                self.selected_game.jatekok[jatek][1] = 2
+
 
         self.new_popup(self.players[self.get_active_player_index()].name + " - " + self.selected_game.kontra_alap[self.selected_game.round][0] + " " + self.selected_game.jatek_lista[num])
-
+        self.cards_played_since_last_kontra = 0
+        print("4")
+        for i in self.selected_game.kontra.keys():
+            print(self.selected_game.kontra[i])
+        print("[*] kontra completed")
 
     def display_results(self):
+        print("[*] display_results started")
         if not self.players[0].ready_for_next_round or not self.players[1].ready_for_next_round or not self.players[2].ready_for_next_round:
             pass
 
         else:
             self.reset()
+        print("[*] display_results completed")
 
     def reset(self):
         # TODO! save game details for later
-        print("reset called")
+        print("[*] reset started")
 
         self.talon.clear()
         self.bidding_list = ["", "", ""]
@@ -512,6 +566,7 @@ class Game(object):
             p.ready_for_next_round = False
 
         self.initialize()
+        print("[*] reset completed")
 
     def log_step(self, filename, data):
         with open(filename, 'a', encoding= 'UTF-8', newline='') as file:

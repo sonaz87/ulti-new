@@ -42,6 +42,7 @@ def main():
     nameBox = Entry(root, width = 10, )
     IPBox = Entry(root, width= 15, )
     passwordBox = Entry(root, width = 20)
+    IPBox.insert(END, '83.160.108.8')
     nameLabel = Label(root, text = "Név: ")
     IPLabel = Label(root, text= "Szerver IP: ")
     # myLabel = Label(root, text = 'Ulti')

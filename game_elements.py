@@ -217,17 +217,9 @@ class Alapjatek(object):
         self.can_be_lost = False
         self.vedok = list()
         self.kontra_alap = {
-            0 : ['', True],
+            0 : ['', True, True],
             1 : ['Kontra', False, False],
-            2 : ['Rekontra', False],
-            3 : ['Szubkontra', False, False],
-            4 : ['Mordkontra', False],
-            5 : ['Hirschkontra', False, False],
-            6 : ['Fedák Sári', False],
-            7 : ['Kerekes bicikli', False, False],
-            8 : ['Darth Vader', False],
-            9 : ['Krúdy-fröccs', False, False],
-            10 : ['Chuck Norris', False]
+            2 : ['Rekontra', False]
         }
         self.kontra = dict()
         self.teritett = False
@@ -543,13 +535,9 @@ class Passz(Szines):
 
 
         for i in range(len(self.players)):
-            print("i, player[i].discard = ", i, self.players[i].discard)
             for turn in self.players[i].discard:
-                print("turn: ", turn)
                 for card in turn:
-                    print("card:", card[0])
                     if card[0].value in ['tizes', 'asz']:
-                        print("pontot ér")
                         self.player_points[i] += 10
         vallalo_points = self.player_points[self.vallalo]
         vedo_points = 0
@@ -561,21 +549,21 @@ class Passz(Szines):
                     highest_kontra = key
             self.jatekok[g][1] = highest_kontra
 
-        for i in self.player_points:
-            print("player points after counting discard:", i)
-            if self.player_points.index(i) != self.vallalo:
-                vedo_points += i
-
         for card in self.talon:
             if card.value in ["tizes", "asz"]:
                 vedo_points += 10
+
+        for i in self.player_points:
+            print("player points after counting discard and talon:", i)
+            if self.player_points.index(i) != self.vallalo:
+                vedo_points += i
 
         if vallalo_points > vedo_points:
             self.jatekok["Passz"][0] = True
             print("vallalo nyert: ", self.vallalo, vallalo_points)
             print("védő pontok:", vedo_points)
             print("vallao player points: ", self.players[self.vallalo].points)
-            print("kontra szolrzó: ", self.jatekok["Passz"][1])
+            print("kontra szorzó: ", self.jatekok["Passz"][1])
             self.players[self.vallalo].points += points * 2 * (2 ** self.jatekok["Passz"][1])
             for p in self.players:
                 if self.players.index(p) != self.vallalo:
@@ -592,68 +580,73 @@ class Passz(Szines):
 
     # csendes duri
     def evaluate_csendes_duri(self, points):
-        print("evaluate csendes duri")
-        if len(self.players[self.vedok[0]].discard) == 0 and len(self.players[self.vedok[1]].discard) == 0:
-            print("csendes duri")
-            self.players[self.vallalo].points += points * 2
-            self.players[self.vedok[0]].points -= points
-            self.players[self.vedok[1]].points -= points
-            self.csendes_duri = True
+        print(" [*] evaluate csendes duri started")
+        if self.round == 10:
+            if len(self.players[self.vedok[0]].discard) == 0 and len(self.players[self.vedok[1]].discard) == 0:
+                print("csendes duri sikerült")
+                self.players[self.vallalo].points += points * 2
+                self.players[self.vedok[0]].points -= points
+                self.players[self.vedok[1]].points -= points
+                self.csendes_duri = True
+        print(" [*] evaluate csendes duri completed")
 
     # csendes ulti
     # az első, hogy volt-e próbálkozás, a második, hogy sikerült-e, a harmadik, hogy kinek
     def evaluate_csendes_ulti(self, points):
-        print("evaluate csendes ulti")
-        colors = {
-            "zold": "Zöld",
-            "makk": "Makk",
-            "tok": "Tök",
-            "piros": "Piros"
-            }
-        if self.adu + " hetes" in self.players[self.last_round_won].discard[-1]:
-            for card in self.players[self.last_round_won].discard[-1]:
-                if card[0] == self.adu + " hetes":
-                    self.csendes_ulti[0] = True
-                    self.csendes_ulti[2] = self.last_round_won
+        print(" [*] evaluate csendes ulti started")
+        if self.round == 10:
 
-                    if self.last_round_won == card[1]:
-                        self.csendes_ulti[1] = True
-                        #sikerült a csendes ulti
-                        print("sikerült a csendes ulti")
-                        self.players[self.last_round_won].points += points * 2
-                        for i in range(3):
-                            if i == self.last_round_won:
-                                continue
-                            else:
-                                self.players[i].points -= points
+            colors = {
+                "zold": "Zöld",
+                "makk": "Makk",
+                "tok": "Tök",
+                "piros": "Piros"
+                }
+            for element in self.players[self.last_round_won].discard[-1]:
+                if colors[self.adu] + " hetes" in element:
+                    if self.last_round_won == element[1]:
+                        if [colors[self.adu] + " hetes", self.vallalo] in self.players[self.last_round_won].discard[-1] and self.last_round_won == self.vallalo:
+                            #sikerült a csendes ulti
+                            print("sikerült a csendes ulti")
+                            self.csendes_ulti = [True, True, element[1]]
+                            self.players[element[1]].points += points * 2
+                            for i in range(3):
+                                if i == element[1]:
+                                    continue
+                                else:
+                                    self.players[i].points -= points
                     else:
-                        #bukott a csendes ulti
                         print("bukott a csendes ulti")
-                        self.players[self.last_round_won].points -= points * 2 * 2
+                        self.csendes_ulti = [True, False, element[1]]
+                        self.players[element[1]].points -= points * 2 * 2
                         for i in range(3):
-                            if i == self.last_round_won:
+                            if i == element[1]:
                                 continue
                             else:
-                                self.players[i].points += points *2
+                                self.players[i].points -= points * 2
+        print(" [*] evaluate csendes ulti completed")
+
 
 
 
     def evaluate_csendes_szaz(self, vedo_points, vallalo_points, points):
-        print("evaluate csendes 100")
-        if vallalo_points >= 100:
-            print("vállaló csendes száz")
-            self.csendes_szaz = True
-            self.players[self.vallalo].points += 2 * points
-            for n in self.vedok:
-                self.players[n].points -= points
+        print(" [*] evaluate csendes 100 started")
+        if self.round == 10:
+            if vallalo_points >= 100:
+                print("vállaló csendes száz")
+                self.csendes_szaz = True
+                self.players[self.vallalo].points += 2 * points
+                for n in self.vedok:
+                    self.players[n].points -= points
 
 
-        elif vedo_points >= 100:
-            print("védő csendes száz")
-            self.csendes_szaz = True
-            self.players[self.vallalo].points -= 2 * points
-            for n in self.vedok:
-                self.players[n].points += points
+            elif vedo_points >= 100:
+                print("védő csendes száz")
+                self.csendes_szaz = True
+                self.players[self.vallalo].points -= 2 * points
+                for n in self.vedok:
+                    self.players[n].points += points
+        print(" [*] evaluate csendes 100 completed")
 
 
 
@@ -705,7 +698,6 @@ class NegyvenSzaz(Szines):
             "piros": "Piros"
         }
         #getting highest kontra
-        print("kontra: ", self.kontra)
         for g in self.jatekok.keys():
             highest_kontra = 0
             for key, value in self.kontra[g].items():
@@ -811,7 +803,7 @@ class Ulti(Szines):
             for i in self.vedok:
                 self.players[i].points += 2 * points * (2 ** self.jatekok["Ulti"][1])
             for i in self.players:
-                print("ulti pontozás után selected playersben", i.name, i.points)
+                print("ulti pontozás után", i.name, i.points)
 
 class Betli(Szintelen):
     def __init__(self, players, lrw):
@@ -844,13 +836,89 @@ class Betli(Szintelen):
 
         if len(self.players[self.vallalo].discard) == 0:
             self.jatekok["Betli"][0] = True
-            self.players[self.vallalo].points += points * 2 * (2 ** self.jatekok["Betli"][1])
-            for i in self.vedok:
-                self.players[i].points -= points * (2 ** self.jatekok["Betli"][1])
+
+            # ha nem volt kontra:
+            if self.jatekok['Betli'][1] == 0:
+                self.players[self.vallalo].points += points * 2
+                for i in self.vedok:
+                    self.players[i].points -= points
+            # ha kontra volt
+            if self.jatekok["Betli"][1] == 1:
+                if self.kontra["Betli"][1][1] and not self.kontra["Betli"][1][2]:
+                    self.players[self.vallalo].points += points + (points * 2)
+                    self.players[self.vedok[0]].points -= points *2
+                    self.players[self.vedok[1]].points -= points
+
+                if not self.kontra["Betli"][1][1] and self.kontra["Betli"][1][2]:
+                    self.players[self.vallalo].points += points + (points * 2)
+                    self.players[self.vedok[0]].points -= points
+                    self.players[self.vedok[1]].points -= points * 2
+
+                if self.kontra["Betli"][1][1] and self.kontra["Betli"][1][2]:
+                    self.players[self.vallalo].points += points * 2 * 2
+                    self.players[self.vedok[0]].points -= points * 2
+                    self.players[self.vedok[1]].points -= points * 2
+
+            if self.jatekok["Betli"][1] == 2:
+                if self.kontra["Betli"][1][1] and not self.kontra["Betli"][1][2]:
+                    self.players[self.vallalo].points += points + (points * 2 * 2)
+                    self.players[self.vedok[0]].points -= points * 2 * 2
+                    self.players[self.vedok[1]].points -= points
+
+                if not self.kontra["Betli"][1][1] and self.kontra["Betli"][1][2]:
+                    self.players[self.vallalo].points += points + (points * 2 * 2)
+                    self.players[self.vedok[0]].points -= points
+                    self.players[self.vedok[1]].points -= points * 2 * 2
+
+                if self.kontra["Betli"][1][1] and self.kontra["Betli"][1][2]:
+                    self.players[self.vallalo].points += points * 2 * 2 * 2
+                    self.players[self.vedok[0]].points -= points * 2 * 2
+                    self.players[self.vedok[1]].points -= points * 2 * 2
+
         else:
-            self.players[self.vallalo].points -= points * 2 * (2 ** self.jatekok["Betli"][1])
-            for i in self.vedok:
-                self.players[i].points += points * (2 ** self.jatekok["Betli"][1])
+            # ha nem volt kontra:
+            if self.jatekok['Betli'][1] == 0:
+                self.players[self.vallalo].points -= points * 2
+                for i in self.vedok:
+                    self.players[i].points += points
+            # ha kontra volt
+            if self.jatekok["Betli"][1] == 1:
+                if self.kontra["Betli"][1][1] and not self.kontra["Betli"][1][2]:
+                    print("a")
+                    self.players[self.vallalo].points -= points + (points * 2)
+                    self.players[self.vedok[0]].points += points * 2
+                    self.players[self.vedok[1]].points += points
+
+                if not self.kontra["Betli"][1][1] and self.kontra["Betli"][1][2]:
+                    print("b")
+                    self.players[self.vallalo].points -= points + (points * 2)
+                    self.players[self.vedok[0]].points += points
+                    self.players[self.vedok[1]].points += points * 2
+
+                if self.kontra["Betli"][1][1] and self.kontra["Betli"][1][2]:
+                    print("c")
+                    self.players[self.vallalo].points -= points * 2 * 2
+                    self.players[self.vedok[0]].points += points * 2
+                    self.players[self.vedok[1]].points += points * 2
+
+            if self.jatekok["Betli"][1] == 2:
+                if self.kontra["Betli"][1][1] and not self.kontra["Betli"][1][2]:
+                    print("d")
+                    self.players[self.vallalo].points -= points + (points * 2 * 2)
+                    self.players[self.vedok[0]].points += points * 2 * 2
+                    self.players[self.vedok[1]].points += points
+
+                if not self.kontra["Betli"][1][1] and self.kontra["Betli"][1][2]:
+                    print("e")
+                    self.players[self.vallalo].points -= points + (points * 2 * 2)
+                    self.players[self.vedok[0]].points += points
+                    self.players[self.vedok[1]].points += points * 2 * 2
+
+                if self.kontra["Betli"][1][1] and self.kontra["Betli"][1][2]:
+                    print("f")
+                    self.players[self.vallalo].points -= points * 2 * 2 * 2
+                    self.players[self.vedok[0]].points += points * 2 * 2
+                    self.players[self.vedok[1]].points += points * 2 * 2
 
     def is_game_lost(self):
         if len(self.players[self.vallalo].discard) == 0:
@@ -881,8 +949,6 @@ class Durchmarsch(Szines):
         Passz.evaluate_csendes_ulti(self, 2)
 
     def evaluate_durchmarsch(self, points):
-        print("kontra: ", self.kontra)
-        print("self.jatekok: ", self.jatekok)
         for g in self.jatekok.keys():
             highest_kontra = 0
             for key, value in self.kontra[g].items():
@@ -901,7 +967,6 @@ class Durchmarsch(Szines):
             for i in self.vedok:
                 self.players[i].points -= points * (2 ** self.jatekok["Durchmarsch"][1])
         else:
-            print("jatekok in the error part: ", self.jatekok)
             self.players[self.vallalo].points -= points * 2 * (2 ** self.jatekok["Durchmarsch"][1])
             for i in self.vedok:
                 self.players[i].points += points * (2 ** self.jatekok["Durchmarsch"][1])
@@ -922,7 +987,7 @@ class SzintelenDurchmarsch(Szintelen):
         self.can_be_lost = True
         self.vanHuszNegyven = False
         self.bemondtak = []
-        self.name = "Durchmarsch"
+        self.name = "Színtelen Durchmarsch"
         self.jatekok = {"Durchmarsch": [False, 0]}
         self.jatek_lista = ["Durchmarsch"]
         self.csendes_szaz_lehet = False
@@ -949,14 +1014,82 @@ class SzintelenDurchmarsch(Szintelen):
                 lost = True
 
         if not lost:
-            self.jatekok["Durchmarsch"][0] = True
-            self.players[self.vallalo].points += points * 2 * (2 ** self.jatekok["Durchmarsch"][1])
-            for i in self.vedok:
-                self.players[i].points -= points * (2 ** self.jatekok["Durchmarsch"][1])
+            # ha nem volt kontra:
+            if self.jatekok['Durchmarsch'][1] == 0:
+                self.players[self.vallalo].points += points * 2
+                for i in self.vedok:
+                    self.players[i].points -= points
+            # ha kontra volt
+            if self.jatekok["Durchmarsch"][1] == 1:
+                if self.kontra["Durchmarsch"][1][1] and not self.kontra["Durchmarsch"][1][2]:
+                    self.players[self.vallalo].points += points + (points * 2)
+                    self.players[self.vedok[0]].points -= points * 2
+                    self.players[self.vedok[1]].points -= points
+
+                if not self.kontra["Durchmarsch"][1][1] and self.kontra["Durchmarsch"][1][2]:
+                    self.players[self.vallalo].points += points + (points * 2)
+                    self.players[self.vedok[0]].points -= points
+                    self.players[self.vedok[1]].points -= points * 2
+
+                if self.kontra["Durchmarsch"][1][1] and self.kontra["Durchmarsch"][1][2]:
+                    self.players[self.vallalo].points += points * 2 * 2
+                    self.players[self.vedok[0]].points -= points * 2
+                    self.players[self.vedok[1]].points -= points * 2
+
+            if self.jatekok["Durchmarsch"][1] == 2:
+                if self.kontra["Durchmarsch"][1][1] and not self.kontra["Durchmarsch"][1][2]:
+                    self.players[self.vallalo].points += points + (points * 2 * 2)
+                    self.players[self.vedok[0]].points -= points * 2 * 2
+                    self.players[self.vedok[1]].points -= points
+
+                if not self.kontra["Durchmarsch"][1][1] and self.kontra["Durchmarsch"][1][2]:
+                    self.players[self.vallalo].points += points + (points * 2 * 2)
+                    self.players[self.vedok[0]].points -= points
+                    self.players[self.vedok[1]].points -= points * 2 * 2
+
+                if self.kontra["Durchmarsch"][1][1] and self.kontra["Durchmarsch"][1][2]:
+                    self.players[self.vallalo].points += points * 2 * 2 * 2
+                    self.players[self.vedok[0]].points -= points * 2 * 2
+                    self.players[self.vedok[1]].points -= points * 2 * 2
+
         else:
-            self.players[self.vallalo].points -= points * 2 * (2 ** self.jatekok["Durchmarsch"][1])
-            for i in self.vedok:
-                self.players[i].points += points * (2 ** self.jatekok["Durchmarsch"][1])
+            # ha nem volt kontra:
+            if self.jatekok['Durchmarsch'][1] == 0:
+                self.players[self.vallalo].points -= points * 2
+                for i in self.vedok:
+                    self.players[i].points += points
+            # ha kontra volt
+            if self.jatekok["Durchmarsch"][1] == 1:
+                if self.kontra["Durchmarsch"][1][1] and not self.kontra["Durchmarsch"][1][2]:
+                    self.players[self.vallalo].points -= points + (points * 2)
+                    self.players[self.vedok[0]].points += points * 2
+                    self.players[self.vedok[1]].points += points
+
+                if not self.kontra["Durchmarsch"][1][1] and self.kontra["Durchmarsch"][1][2]:
+                    self.players[self.vallalo].points -= points + (points * 2)
+                    self.players[self.vedok[0]].points += points
+                    self.players[self.vedok[1]].points += points * 2
+
+                if self.kontra["Durchmarsch"][1][1] and self.kontra["Durchmarsch"][1][2]:
+                    self.players[self.vallalo].points -= points * 2 * 2
+                    self.players[self.vedok[0]].points += points * 2
+                    self.players[self.vedok[1]].points += points * 2
+
+            if self.jatekok["Durchmarsch"][1] == 2:
+                if self.kontra["Durchmarsch"][1][1] and not self.kontra["Durchmarsch"][1][2]:
+                    self.players[self.vallalo].points -= points + (points * 2 * 2)
+                    self.players[self.vedok[0]].points += points * 2 * 2
+                    self.players[self.vedok[1]].points += points
+
+                if not self.kontra["Durchmarsch"][1][1] and self.kontra["Durchmarsch"][1][2]:
+                    self.players[self.vallalo].points -= points + (points * 2 * 2)
+                    self.players[self.vedok[0]].points += points
+                    self.players[self.vedok[1]].points += points * 2 * 2
+
+                if self.kontra["Durchmarsch"][1][1] and self.kontra["Durchmarsch"][1][2]:
+                    self.players[self.vallalo].points -= points * 2 * 2 * 2
+                    self.players[self.vedok[0]].points += points * 2 * 2
+                    self.players[self.vedok[1]].points += points * 2 * 2
 
     def is_game_lost(self):
         lost = False
