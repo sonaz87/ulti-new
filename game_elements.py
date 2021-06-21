@@ -384,7 +384,7 @@ class Szines(Alapjatek):
                                     return False
                     else:
                         print("18")
-                        if has_bigger_card([cards_on_the_table[0][0]], hand):
+                        if has_bigger_card(cards_on_the_table[0][0], hand):
                             print("19")
                             print("cards on the table:", cards_on_the_table)
                             print("card to be played: ", card_to_be_played)
