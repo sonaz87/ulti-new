@@ -71,6 +71,7 @@ def redrawWindow(DISPLAYSURF, game, player):
     global startOverButton
     global textRectObj
     global selected_cards_local
+    global kontraSurfs
 
     # colors
 
@@ -338,6 +339,8 @@ def redrawWindow(DISPLAYSURF, game, player):
                         DISPLAYSURF.blit(playCardConfirmButtonSurf, playCardConfirmButtonRect)
             except:
                 print("error in play phase display")
+                # print("selected_cards_local: ", selected_cards_local[0])
+                # print("type: ", type(selected_cards_local[0]))
                 e = sys.exc_info()
                 print(e)
                 pass
@@ -421,14 +424,14 @@ def redrawWindow(DISPLAYSURF, game, player):
                         if player in game.selected_game.vedok:
                             for g, value in game.selected_game.kontra.items():
                                 if False in game.selected_game.kontra[g][1]:
-                                    kontraSurfs.append(fontObj3.render('Parti' if g == 'Passz' else g, True, BLACK))
-                                    kontraRects.append(kontraSurfs[-1].get_rect())
+                                    kontraSurfs.append([fontObj3.render('Parti' if g == 'Passz' else g, True, BLACK), g])
+                                    kontraRects.append(kontraSurfs[-1][0].get_rect())
 
                         if player == game.selected_game.vallalo:
                             for g, value in game.selected_game.kontra.items():
                                 if True in game.selected_game.kontra[g][1] and False in game.selected_game.kontra[g][2]:
-                                    kontraSurfs.append(fontObj3.render('Parti' if g == 'Passz' else g, True, BLACK))
-                                    kontraRects.append(kontraSurfs[-1].get_rect())
+                                    kontraSurfs.append([fontObj3.render('Parti' if g == 'Passz' else g, True, BLACK), g])
+                                    kontraRects.append(kontraSurfs[-1][0].get_rect())
 
 
                         pygame.draw.rect(DISPLAYSURF, LIGHT_GREY, (950, 200, 300, 400))
@@ -436,7 +439,7 @@ def redrawWindow(DISPLAYSURF, game, player):
                         for i in range(len(kontraSurfs)):
                             kontraRects[i].right = 1080
                             kontraRects[i].top = displacement
-                            DISPLAYSURF.blit(kontraSurfs[i], kontraRects[i])
+                            DISPLAYSURF.blit(kontraSurfs[i][0], kontraRects[i])
                             confirmRect = okSurf.get_rect()
                             confirmRect.left = 1120
                             confirmRect.top = displacement
@@ -842,7 +845,7 @@ def client(name_in, server_ip, password):
                 try:
                     for i in range(len(kontraConfirms)):
                         if mouseClicked and kontraConfirms[i].collidepoint(mousex, mousey):
-                            data = pickle.dumps("kontra:" + str(i))
+                            data = pickle.dumps("kontra:" + kontraSurfs[i][1])
                             game = n.send(data, 0)
                             game_updated = True
                 except:

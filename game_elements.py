@@ -139,6 +139,8 @@ class Card(object):
 
     def bigger_than(self, other, values):
         # print("in bigger.than")
+        # print("self, other:", self, other)
+        # print("tyoes:", type(self), type(other))
         # print("self value", values.index(self.value))
         # print("other value", values.index(other.value))
         if values.index(self.value) > values.index(other.value) and self.color == other.color:
@@ -248,7 +250,7 @@ class Szines(Alapjatek):
 
         def has_bigger_card(card1, hand):
             for c in hand:
-                if c.bigger_than(card1,self.number_values):
+                if c.bigger_than(card1, self.number_values):
                     return True
             return False
 
@@ -338,50 +340,81 @@ class Szines(Alapjatek):
         # ha mindkettő nem adu
 
             elif cards_on_the_table[0][0].color != self.adu and cards_on_the_table[1][0].color != self.adu:
+                print("1")
                 if is_color_available(cards_on_the_table[0][0].color, hand):
+                    print("2")
                     if cards_on_the_table[0][0].color == cards_on_the_table[1][0].color:
+                        print("3")
                         if cards_on_the_table[0][0].bigger_than(cards_on_the_table[1][0],self.number_values):
+                            print("4")
                             if has_bigger_card(cards_on_the_table[0][0], hand):
+                                print("5")
                                 if card_to_be_played.bigger_than(cards_on_the_table[0][0], self.number_values) and card_to_be_played.color == cards_on_the_table[0][0].color:
+                                    print("6")
                                     return True
                                 else:
+                                    print("7")
                                     return False
                             else:
+                                print("8")
                                 if card_to_be_played.color == cards_on_the_table[0][0].color:
+                                    print("9")
                                     return True
                                 else:
+                                    print("10")
                                     return False
                         else:
+                            print("11")
                             if has_bigger_card(cards_on_the_table[1][0], hand):
+                                print("12")
                                 if card_to_be_played.bigger_than(cards_on_the_table[1][0], self.number_values) and card_to_be_played.color == cards_on_the_table[1][0].color:
+                                    print("13")
                                     return True
                                 else:
+                                    print("14")
                                     return False
                             else:
+                                print("15")
                                 if card_to_be_played.color == cards_on_the_table[1][0].color:
+                                    print("16")
                                     return True
                                 else:
+                                    print("17")
                                     return False
                     else:
-                        if has_bigger_card([cards_on_the_table[0][0]],self.number_values):
+                        print("18")
+                        if has_bigger_card([cards_on_the_table[0][0]], hand):
+                            print("19")
+                            print("cards on the table:", cards_on_the_table)
+                            print("card to be played: ", card_to_be_played)
                             if card_to_be_played.bigger_than(cards_on_the_table[0][0], self.number_values) and card_to_be_played.color == cards_on_the_table[0][0].color:
+                                print("20")
                                 return True
                             else:
+                                print("21")
                                 return False
                         else:
+                            print("22")
                             if card_to_be_played.color == cards_on_the_table[0][0].color:
+                                print("22")
                                 return True
                             else:
+                                print("23")
                                 return False
 
 
                 else:
+                    print("24")
                     if is_color_available(self.adu, hand):
+                        print("25")
                         if card_to_be_played.color == self.adu:
+                            print("26")
                             return True
                         else:
+                            print("27")
                             return False
                     else:
+                        print("28")
                         return True
             # ha az első nem adu, a második igen
             elif cards_on_the_table[0][0].color != self.adu and cards_on_the_table[1][0].color == self.adu:

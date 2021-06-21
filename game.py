@@ -15,7 +15,7 @@ PLAY = 'play'
 END = 'end'
 
 class Game(object):
-    global last_round_won
+    # global last_round_won
     def __init__(self):
         self.players = []
         self.game_phase = STARTED
@@ -256,17 +256,6 @@ class Game(object):
                 print(" [*] in play_card: active player selected and played cards: ", self.players[x].selected_cards, self.players[x].card_played)
             self.remove_discards_from_hand()
 
-            if x == self.selected_game.vedok[0]:
-                if self.selected_game.vedo1_kontra_possible and not self.selected_game.vedo1_kontra_was_done:
-                    self.selected_game.vedo1_kontra_possible = False
-            if x == self.selected_game.vedok[1]:
-                if self.selected_game.vedo2_kontra_possible and not self.selected_game.vedo2_kontra_was_done:
-                    self.selected_game.vedo2_kontra_possible = False
-            if x == self.selected_game.vallalo:
-                if self.selected_game.vallalo_kontra_possible and not (self.selected_game.vallalo_kontra_on_vedo1_was_done or self.selected_game.vallalo_kontra_on_vedo2_was_done):
-                    self.selected_game.vallalo_kontra_possible = False
-
-
             print(" [*] play_card completed")
         except:
             print("error in game.play_card")
@@ -485,15 +474,15 @@ class Game(object):
                 return i
 
 
-    def kontra(self, num):
+    def kontra(self, jatek):
 
         print("[*] kontra started")
-        num = int(num)
-        print("selected_game.jatek_lista", self.selected_game.jatek_lista)
-        jatek = self.selected_game.jatek_lista[num]
+        # num = int(num)
+        # print("selected_game.jatek_lista", self.selected_game.jatek_lista)
+        # jatek = self.selected_game.jatek_lista[num]
 
 
-
+        print("jatek", jatek)
         if isinstance(self.selected_game, Szines):
             print("színes játék")
 
@@ -526,7 +515,7 @@ class Game(object):
                 self.selected_game.jatekok[jatek][1] = 2
 
 
-        self.new_popup(self.players[self.get_active_player_index()].name + " - " + self.selected_game.kontra_alap[self.selected_game.round][0] + " " + self.selected_game.jatek_lista[num])
+        self.new_popup(self.players[self.get_active_player_index()].name + " - " + self.selected_game.kontra_alap[self.selected_game.round][0] + " " + str(jatek))
         self.cards_played_since_last_kontra = 0
         print("4")
         for i in self.selected_game.kontra.keys():
