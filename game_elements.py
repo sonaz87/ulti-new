@@ -216,6 +216,7 @@ class Alapjatek(object):
         self.player_points = [0, 0, 0]
         self.players = players
         self.talon = None
+        self.round = 1
         self.can_be_lost = False
         self.vedok = list()
         self.kontra_alap = {
@@ -553,7 +554,7 @@ class Passz(Szines):
 
     def evaluate(self):
         vedo_points, vallalo_points = self.evaluate_passz(self.points)
-        self.evaluate_csendes_szaz(vedo_points, vallalo_points, 2)
+        self.evaluate_csendes_szaz(vedo_points, vallalo_points, 1)
         self.evaluate_csendes_ulti(2)
         self.evaluate_csendes_duri(3)
 
@@ -695,7 +696,7 @@ class PirosPassz(Passz):
 
     def evaluate(self):
         vedo_points, vallalo_points = Passz.evaluate_passz(self, 2)
-        Passz.evaluate_csendes_szaz(self, vedo_points, vallalo_points, 4)
+        Passz.evaluate_csendes_szaz(self, vedo_points, vallalo_points, 2)
         Passz.evaluate_csendes_ulti(self, 4)
         Passz.evaluate_csendes_duri(self, 6)
 
@@ -799,7 +800,7 @@ class Ulti(Szines):
     def evaluate(self):
         vedo_points, vallalo_points = Passz.evaluate_passz(self, 1)
         self.evaluate_ulti(4)
-        Passz.evaluate_csendes_szaz(self, vedo_points, vallalo_points, 2)
+        Passz.evaluate_csendes_szaz(self, vedo_points, vallalo_points, 1)
         Passz.evaluate_csendes_duri(self, 3)
 
     def evaluate_ulti(self, points):
@@ -1258,7 +1259,7 @@ class PirosUlti(Ulti):
     def evaluate(self):
         vedo_points, vallalo_points = Passz.evaluate_passz(self, 2)
         Ulti.evaluate_ulti(self, 8)
-        Passz.evaluate_csendes_szaz(self, vedo_points, vallalo_points, 4)
+        Passz.evaluate_csendes_szaz(self, vedo_points, vallalo_points, 2)
         Passz.evaluate_csendes_duri(self, 6)
 
 

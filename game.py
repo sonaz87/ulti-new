@@ -409,7 +409,7 @@ class Game(object):
         self.new_popup(self.players[x].name + " vitte")
         self.last_round_won = x
         self.players[x].discard.append(self.cards_on_the_table[:])
-        if self.selected_game.round == 10:
+        if self.selected_game.round == 10 or (len(self.players[0].hand) == 0 and len(self.players[1].hand) == 0 and len(self.players[2].hand) == 0):
             print("[*] - collect_played_cards : round 10 trigger")
             self.selected_game.player_points[x] += 10
             self.game_phase = END
@@ -543,6 +543,7 @@ class Game(object):
         self.selected_game = None
         self.current_game = 'No Game'
         self.new_popup("Új játék")
+
 
         for p in self.players:
             p.hand.clear()
