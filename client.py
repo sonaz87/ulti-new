@@ -72,6 +72,9 @@ def redrawWindow(DISPLAYSURF, game, player):
     global textRectObj
     global selected_cards_local
     global kontraSurfs
+    global teritesButton
+    global fizetesButton
+    global acceptTeritesButton
 
     # colors
 
@@ -306,17 +309,52 @@ def redrawWindow(DISPLAYSURF, game, player):
             try:
                 nextPlayerSurf = fontObj.render(game.players[game.get_active_player_index()].name  + " jön", True, WHITE)
                 nextPlayerRect = nextPlayerSurf.get_rect()
-                nextPlayerRect.center = (700, 60)
+                nextPlayerRect.center = (700, 75)
                 DISPLAYSURF.blit(nextPlayerSurf, nextPlayerRect)
             except:
                 pass
 
         except:
             pass
+        # terítés és kifizetés button
+        try:
+            if player == game.selected_game.vallalo:
+                teritesSurf = fontObj.render("Terítés", True, WHITE)
+                teritesRect = teritesSurf.get_rect()
+                teritesRect.top = 450
+                teritesRect.left = 50
+                teritesButton = pygame.draw.rect(DISPLAYSURF, GREY, teritesRect)
+                DISPLAYSURF.blit(teritesSurf, teritesRect)
+
+                fizetesSurf = fontObj.render("Kifizetem", True, WHITE)
+                fizetesRect = fizetesSurf.get_rect()
+                fizetesRect.top = 500
+                fizetesRect.left = 50
+                fizetesButton = pygame.draw.rect(DISPLAYSURF, GREY, fizetesRect)
+                DISPLAYSURF.blit(fizetesSurf, fizetesRect)
+
+        except:
+            print("error in displaying terites")
+            e = sys.exc_info()
+            print(e)
+            pass
+
+        try:
+            if player in game.selected_game.vedok and game.selected_game.ingame_terites:
+                acceptTeritesSurf = fontObj.render("Elfogadom", True, WHITE)
+                acceptTeritesRect = acceptTeritesSurf.get_rect()
+                acceptTeritesRect.center = (70,450)
+                acceptTeritesButton = pygame.draw.rect(DISPLAYSURF, GREY, acceptTeritesRect)
+                DISPLAYSURF.blit(acceptTeritesSurf, acceptTeritesRect)
+        except:
+            print("error in displaying accept terites")
+            e = sys.exc_info()
+            print(e)
+            pass
 
         # terített játéknál a vállaló lapjai:
         try:
-            if player != game.selected_game.vallalo and game.selected_game.round > 1 and game.selected_game.teritett:
+            if (player != game.selected_game.vallalo and game.selected_game.round > 1 and game.selected_game.teritett) or game.selected_game.ingame_terites:
                 teritett_cards_to_display = []
                 displacement = 150
                 for card in game.players[game.selected_game.vallalo].hand:
@@ -814,6 +852,30 @@ def client(name_in, server_ip, password):
                     pass
 
                 try:
+                    if mouseClicked and teritesButton.collidepoint(mousex, mousey):
+                        data = pickle.dumps("terites")
+                        game = n.send(data, 0)
+                        game_updated = True
+                except:
+                    pass
+
+                try:
+                    if mouseClicked and acceptTeritesButton.collidepoint(mousex, mousey):
+                        data = pickle.dumps("accept_terites:"+str(player))
+                        game = n.send(data, 0)
+                        game_updated = True
+                except:
+                    pass
+
+                try:
+                    if mouseClicked and fizetesButton.collidepoint(mousex, mousey):
+                        data = pickle.dumps("fizetes")
+                        game = n.send(data, 0)
+                        game_updated = True
+                except:
+                    pass
+
+                try:
                     if mouseClicked and aduTokRect.collidepoint(mousex, mousey):
                         game.players[player].adu_selected = 'tok'
                         data = pickle.dumps(game.players[player])
@@ -857,6 +919,10 @@ def client(name_in, server_ip, password):
 
                 except:
                     pass
+
+
+
+
             try:
                 if game.game_phase == END:
                     if mouseClicked and startOverButton.collidepoint(mousex, mousey):

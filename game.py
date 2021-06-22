@@ -104,6 +104,12 @@ class Game(object):
         return None
 
     def initialize(self):
+        """
+        this function initializes the game by setting game_phase to BIDDING, randomly choosing a dealer if there is none
+        and then dealing cards to all players
+
+        :return:
+        """
         self.game_phase = BIDDING
         print(" [*] game init started")
         self.deck.shuffle()
@@ -123,6 +129,11 @@ class Game(object):
         print(" [*] game init completed")
 
     def deal_hands(self):
+        """
+        this function deals 10-10 cards to the dealer and the player on the dealer's left
+        and 12 to the one on the dealer's right
+        :return:
+        """
         print(" [*] deal_hands started")
         for p in self.players:
             p.is_active = False
@@ -161,6 +172,11 @@ class Game(object):
 
 
     def accept_bid(self):
+        """
+        this function accepts a bid from a player and advances the active player
+        :return:
+        """
+
         print(" [*] acdept_bid started")
         p = self.get_active_player_index()
         self.current_game = self.players[p].licit_selected[:]
@@ -182,6 +198,11 @@ class Game(object):
         print(" [*] acdept_bid completed")
 
     def pickup(self):
+        """
+        this function appends the game.talon to the active players's hand
+        and sets them as the active bidder
+        :return:
+        """
         print(" [*] pickup started")
         p = self.get_active_player_index()
         data = [self.players[p].hand, self.players[p].licit_selected]
@@ -196,6 +217,12 @@ class Game(object):
         print(" [*] pickup completed")
 
     def passz(self):
+        """
+        this function is triggered when passz is called. it advances the active player
+        if 3 passz moves were made consecutively it either starts the game (if any game than Passz was chosen)
+        or resets the game
+        :return:
+        """
         print(" [*] passz started")
         p = self.get_active_player_index()
         self.bidding_list.pop(0)
@@ -216,18 +243,41 @@ class Game(object):
             self.players[p].is_active = False
             self.players[p - 1].is_active = True
         print(self.bidding_list)
+        self.new_popup(self.players[p].name + " passzolt")
 
         active_counter = 0
         print(" [*] passz completed")
 
 
     def restart_because_no_bidding(self):
+        """
+        this function resets the game when there was no bids on games higher than Passz
+        the dealer remains the same
 
+        :return:
+        """
         print(" [*] restart_because_no_bidding started")
-        self.selected_game = 'No Game'
+        self.bidding_list = ["", "", ""]
+        self.vallalo = ""
+        self.card_played = None
+        self.cards_on_the_table.clear()
+        self.selected_game = None
+        self.current_game = 'No Game'
+        self.new_popup("Új játék")
+        self.talon.clear()
         self.game_phase = BIDDING
+
+        for p in self.players:
+            p.hand.clear()
+            p.discard.clear()
+            p.card_played = None
+            p.selected_cards.clear()
+            p.licit_selected = None
+            p.adu_selected = None
+
         self.deck.shuffle()
         self.deal_hands()
+
         for p in self.players:
             p.sort_hand()
             p.licit_selected = None
@@ -235,6 +285,13 @@ class Game(object):
 
 
     def play_card(self):
+        """
+        This function gets the active player and moves their selected card to the card_played and cards_on_the_table lists
+        removing the card fro the players hand and selected_card vars
+        if less than 3 cards have been played including the current one, it advances the active player
+
+        :return:
+        """
         print(" [*] play_card started")
         try:
             x = self.get_active_player_index()
@@ -268,6 +325,11 @@ class Game(object):
             pass
 
     def get_active_player_index(self):
+        """
+        this function gets the active player:
+        if not only one is marked active, it checks based on game events to identify the correct one
+        :return: int, the index of the active player in game.players
+        """
         index = []
         for p in self.players:
             if p.is_active:
@@ -291,8 +353,33 @@ class Game(object):
             # print(" [*] in get_active_player_index after fix: ", 0, self.players[0].is_active, 1, self.players[1].is_active, 2,self.players[2].is_active)
             return x
 
+    def accept_terites(self, x):
+        print(" [*] accept terites started")
+        self.selected_game.accept_terites.append(int(x))
+        if self.selected_game.vedok[0] in self.selected_game.accept_terites and self.selected_game.vedok[1] in self.selected_game.accept_terites:
+            if isinstance(self.selected_game, Szines):
+                last_round = []
+                for p in self.players:
+                    for c in p.hand:
+                        last_round.append([copy.deepcopy(c), self.players.index(p)])
+                        p.hand.remove(c)
+                self.players[self.selected_game.vallalo].discard.append(last_round)
+            # TODO játék végét meghívni
+            print("[*] game end - accept_terites trigger")
+            self.selected_game.player_points[self.selected_game.vallalo] += 10
+            self.game_phase = END
+            self.selected_game.evaluate()
+            data = [self.selected_game]
+            self.log_step("completed_game.log", data)
+            self.display_results()
+        print(" [*] accept terites completed")
 
     def who_won_round(self):
+        """
+        evaluates who won a given round after 3 cards have been played
+
+        :return: int, the index in game.players who won the round
+        """
         print(" [*] who_won_round started")
         if issubclass(type(self.selected_game), Szines):
             adus = []
@@ -378,6 +465,11 @@ class Game(object):
 
 
     def remove_discards_from_hand(self):
+        """
+        this function collects all cards in the discards and if any of them are still present in a player's hand, removes them
+
+        :return:
+        """
         print(" [*] remove_discards_from_hand started")
         discards = []
         for p in self.players:
@@ -395,6 +487,11 @@ class Game(object):
         print(" [*] remove_discards_from_hand started")
 
     def collect_played_cards(self):
+        """
+        this function is used to collect the cards once 3 of them were played, determine the winner and move them to the discard
+        the next active player will be the winner
+        :return:
+        """
         # megnézi, ki vitte, berakja a discardjába
         # ha van adu: a legnagyobb adu nyer
         # ha nincs: a legnagyobb alapszín nyer
@@ -441,6 +538,11 @@ class Game(object):
         print("[*] collect_played_cards completed")
 
     def getHuszNegyven(self, adu):
+        """
+        This function checks if the active player has any 20 or 40 in their hand, and if yes, updates the
+        game.selected_game.player_points
+        """
+
         print("[*] getHuszNegyven started")
         x = self.get_active_player_index()
         colordict = {
@@ -475,6 +577,14 @@ class Game(object):
 
 
     def kontra(self, jatek):
+        """
+        This function sets the kontra one step higher if triggered
+        Szines games are countered collectively by defenders
+        Szintelen games are countered individually
+
+        :param jatek: the name of the game component being countered
+        :return:
+        """
 
         print("[*] kontra started")
         # num = int(num)
@@ -523,6 +633,14 @@ class Game(object):
         print("[*] kontra completed")
 
     def display_results(self):
+        """
+        this function waits until every player has chosen to start a new game
+        while displaying results (in client)
+        and then calling reset
+
+        :return:
+        """
+
         print("[*] display_results started")
         if not self.players[0].ready_for_next_round or not self.players[1].ready_for_next_round or not self.players[2].ready_for_next_round:
             pass
@@ -532,6 +650,12 @@ class Game(object):
         print("[*] display_results completed")
 
     def reset(self):
+        """
+        this function resets the game after a turn has been completed
+
+        :return:
+        """
+
         # TODO! save game details for later
         print("[*] reset started")
 

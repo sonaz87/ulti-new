@@ -91,6 +91,21 @@ def threaded_client(conn, p, ip, game):
                         game.getHuszNegyven(game.selected_game.adu)
                     elif data.split(":")[0] == "kontra":
                         game.kontra(data.split(":")[1])
+
+                    elif data == 'fizetes':
+                        game.selected_game.fizetes()
+                        game.game_phase = 'end'
+                        game.display_results()
+
+                    elif data == 'terites':
+                        game.selected_game.ingame_terites = True
+
+                    elif data.split(":")[0] == 'accept_terites':
+                        print(" [*] server: accept_terites msg received")
+                        game.accept_terites(data.split(":")[1])
+
+
+
                     elif data == "reset":
                         game.display_results()
                     if game.game_phase in [STARTED, INIT] and len(game.players) == 3:
@@ -129,7 +144,6 @@ def threaded_client(conn, p, ip, game):
                     print("line", line)
                     print("text: ", text)
                     break
-
 
             serialized_payload = pickle.dumps(game)
             conn.sendall(struct.pack('>I', len(serialized_payload)))
