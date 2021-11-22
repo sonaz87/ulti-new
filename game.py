@@ -545,30 +545,38 @@ class Game(object):
 
         print("[*] getHuszNegyven started")
         x = self.get_active_player_index()
-        colordict = {
-            'zold' : 'Zöld',
-            'tok' : 'Tök',
-            'makk' : "Makk",
-            'piros' : 'Piros'
-            }
-        husz = 0
-        negyven = 0
-        for key, value in colordict.items():
-            if value + " felső" in self.players[x].hand and value + " király" in self.players[x].hand:
-                if key == adu:
-                    self.selected_game.player_points[x] += 40
-                    negyven += 1
+        if x not in self.selected_game.bemondtak:
+            colordict = {
+                'zold' : 'Zöld',
+                'tok' : 'Tök',
+                'makk' : "Makk",
+                'piros' : 'Piros'
+                }
+            husz = 0
+            negyven = 0
+            for key, value in colordict.items():
+                if value + " felső" in self.players[x].hand and value + " király" in self.players[x].hand:
+                    if key == adu:
+                        self.selected_game.player_points[x] += 40
+                        negyven += 1
+                    else:
+                        self.selected_game.player_points[x] += 20
+                        husz += 1
+            if negyven == 1:
+                self.new_popup(self.players[x].name + ": van negyvenem")
+            if husz > 0:
+                if husz == 1:
+                    husz_str= "egy"
+                elif husz == 2:
+                    husz_str = "két"
                 else:
-                    self.selected_game.player_points[x] += 20
-                    husz += 1
-        if negyven == 1:
-            self.new_popup(self.players[x].name + ": van negyvenem")
-        if husz > 0:
-            self.new_popup(self.players[x].name + ": van " + str(husz) + " húszam")
-        self.selected_game.bemondtak.append(x)
-        for y in range(3):
-            print("player ", y , " points: ", self.selected_game.player_points[y])
-        print("[*] getHuszNegyven completed")
+                    husz_str = "három"
+                self.new_popup(self.players[x].name + ": van " + husz_str + " húszam")
+            self.selected_game.bemondtak.append(x)
+            for y in range(3):
+                print("player ", y , " points: ", self.selected_game.player_points[y])
+            print("[*] getHuszNegyven completed")
+
 
     def get_next_kontra(self, jatek):
         for i in range(15):
