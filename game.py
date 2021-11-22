@@ -664,6 +664,7 @@ class Game(object):
         self.vallalo = ""
         self.card_played = None
         self.cards_on_the_table.clear()
+        del self.selected_game
         self.selected_game = None
         self.current_game = 'No Game'
         self.new_popup("Új játék")

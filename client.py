@@ -542,7 +542,7 @@ def redrawWindow(DISPLAYSURF, game, player):
                     displacement += 40
             if game.selected_game.csendes_ulti_lehet:
                 if game.selected_game.csendes_ulti[0]:
-                    csendesUltiSurf = fontObj.render(game.players[game.selected_game.csendes_ulti[2]].name + " - Csendes ulti ", + ('sikerült' if game.selected_game.csendes_ulti[1] else 'bukva'), True, BLACK)
+                    csendesUltiSurf = fontObj.render(game.players[game.selected_game.csendes_ulti[2]].name + " - Csendes ulti " + ('sikerült' if game.selected_game.csendes_ulti[1] else 'bukva'), True, BLACK)
                     csendesUltiRect = csendesSzazSurf.get_rect()
                     csendesUltiRect.left = 300
                     csendesUltiRect.top = displacement
